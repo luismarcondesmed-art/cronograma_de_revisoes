@@ -23,7 +23,21 @@
             theme: {
                 extend: {
                     colors: {
-                        slate: { 850: '#1e293b', 950: '#020617' }
+                        // Substituindo o "Slate" (Azulado) por "Zinc" (Neutro/Cinza Puro)
+                        slate: {
+                            50: '#fafafa',
+                            100: '#f4f4f5',
+                            200: '#e4e4e7',
+                            300: '#d4d4d8',
+                            400: '#a1a1aa',
+                            500: '#71717a',
+                            600: '#52525b',
+                            700: '#3f3f46',
+                            800: '#27272a',
+                            850: '#202023', // Custom para cards
+                            900: '#18181b',
+                            950: '#09090b', // Fundo principal bem escuro e neutro
+                        }
                     }
                 }
             }
@@ -394,6 +408,8 @@
 
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
             
+            // Add: Update updatedAt on review
+            // UPDATED: Pass next stage type to calculateNextLoad
             const completeReview = (data) => { 
                 setTopics(prev => prev.map(topic => { 
                     if (topic.id !== selectedTask.topicId) return topic; 
@@ -403,7 +419,7 @@
                     
                     if (currentIdx + 1 < newReviews.length) { 
                         const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
-                        const nextReviewType = newReviews[currentIdx + 1].type; 
+                        const nextReviewType = newReviews[currentIdx + 1].type; // 'R2', 'R3' etc
                         const nextLoad = calculateNextLoad(accuracy, topic.importance, data.difficulty, nextReviewType); 
                         newReviews[currentIdx + 1].targetQ = nextLoad; 
                     } 
@@ -411,9 +427,11 @@
                 })); 
             };
             
+            // Change: Soft Delete with Timestamp
             const deleteTopic = (id) => setTopics(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: Date.now() } : t));
 
             const sortedTopics = useMemo(() => {
+                // Filter out soft-deleted items for display
                 let list = [...topics].filter(t => !t.deleted);
                 if (filterArea !== 'all') list = list.filter(t => t.area === filterArea);
                 list.sort((a, b) => { const getNextDate = (t) => t.reviews.find(r => !r.done)?.date || '9999-99-99'; const dateA = getNextDate(a); const dateB = getNextDate(b); const aDue = dateA <= todayStr; const bDue = dateB <= todayStr; if (aDue && !bDue) return -1; if (!aDue && bDue) return 1; return dateA.localeCompare(dateB); });

@@ -23,7 +23,6 @@
             theme: {
                 extend: {
                     colors: {
-                        // Substituindo o "Slate" (Azulado) por "Zinc" (Neutro/Cinza Puro)
                         slate: {
                             50: '#fafafa',
                             100: '#f4f4f5',
@@ -34,9 +33,9 @@
                             600: '#52525b',
                             700: '#3f3f46',
                             800: '#27272a',
-                            850: '#202023', // Custom para cards
+                            850: '#202023', 
                             900: '#18181b',
-                            950: '#09090b', // Fundo principal bem escuro e neutro
+                            950: '#09090b', 
                         }
                     }
                 }
@@ -64,18 +63,14 @@
         input[type="date"] { display: block; -webkit-appearance: none; appearance: none; line-height: 1.5; }
     </style>
 
-    <!-- PWA Manifest & Icons Generator -->
+    <!-- PWA Manifest & Icons -->
     <script>
-        // Gera o ícone SVG
         const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#ffffff" rx="128"/><path d="M469.3 256h-85.3l-64-192-128 384-64-192H42.7" stroke="#10b981" stroke-width="42" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
         const iconUrl = "data:image/svg+xml;base64," + btoa(iconSvg);
-
         const linkIcon = document.createElement('link'); linkIcon.rel = 'icon'; linkIcon.href = iconUrl; document.head.appendChild(linkIcon);
         const linkApple = document.createElement('link'); linkApple.rel = 'apple-touch-icon'; linkApple.href = iconUrl; document.head.appendChild(linkApple);
-
         const manifest = { name: "ResiFlow", short_name: "ResiFlow", start_url: ".", display: "standalone", background_color: "#ffffff", theme_color: "#0f172a", icons: [{ src: iconUrl, sizes: "512x512", type: "image/svg+xml" }] };
         const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = 'data:application/json;base64,' + btoa(JSON.stringify(manifest)); document.head.appendChild(linkManifest);
-
         if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
             try {
                 const swContent = `self.addEventListener('fetch', e => { return; });`;
@@ -92,12 +87,14 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
+        // --- ICON ADAPTER ---
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
             return React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className }, iconData.map((ele, i) => React.createElement(ele[0], { ...ele[1], key: i })));
         };
 
+        // Icons
         const Target = (p) => <LucideIcon name="Target" {...p} />;
         const CalendarIcon = (p) => <LucideIcon name="Calendar" {...p} />;
         const Plus = (p) => <LucideIcon name="Plus" {...p} />;
@@ -125,7 +122,16 @@
         const Save = (p) => <LucideIcon name="Save" {...p} />;
         const Download = (p) => <LucideIcon name="Download" {...p} />;
         const Settings = (p) => <LucideIcon name="Settings" {...p} />;
+        const Timer = (p) => <LucideIcon name="Timer" {...p} />;
+        const Play = (p) => <LucideIcon name="Play" {...p} />;
+        const Pause = (p) => <LucideIcon name="Pause" {...p} />;
+        const RotateCcw = (p) => <LucideIcon name="RotateCcw" {...p} />;
+        const PenTool = (p) => <LucideIcon name="PenTool" {...p} />;
+        const Layers = (p) => <LucideIcon name="Layers" {...p} />;
+        const MonitorPlay = (p) => <LucideIcon name="MonitorPlay" {...p} />;
+        const Notebook = (p) => <LucideIcon name="Notebook" {...p} />;
 
+        // --- CONFIG ---
         const USER_FIREBASE_CONFIG = {
             apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s",
             authDomain: "med-heklp.firebaseapp.com",
@@ -146,9 +152,9 @@
         ];
 
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800' },
-            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' },
-            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-600 bg-slate-50 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+            { id: 'high', label: 'Alta', weight: 2.0 },
+            { id: 'medium', label: 'Média', weight: 1.5 },
+            { id: 'low', label: 'Baixa', weight: 1.0 },
         ];
 
         const DIFFICULTY_LEVELS = [
@@ -157,22 +163,20 @@
             { id: 'hard', label: 'Difícil', weight: 1.3, icon: ThumbsDown },
         ];
 
-        const SYSTEM_PARAMS = {
-            BASE_QUESTIONS: 20,
-            MIN_QUESTIONS: 15,
-            MAX_QUESTIONS: 80,
-            SPACING_FACTORS: {
-                'R0': 0.75, 
-                'R1': 2.00, 
-                'R2': 1.25, 
-                'R3': 0.75, 
-                'DEFAULT': 1.0
-            }
-        };
+        const LOG_TYPES = [
+            { id: 'questions', label: 'Questões', icon: Target, color: 'text-blue-500' },
+            { id: 'anki', label: 'Anki', icon: Layers, color: 'text-purple-500' },
+            { id: 'class', label: 'Aula', icon: MonitorPlay, color: 'text-red-500' },
+            { id: 'reading', label: 'Leitura', icon: BookOpen, color: 'text-emerald-500' },
+            { id: 'other', label: 'Outro', icon: PenTool, color: 'text-slate-500' },
+        ];
 
+        // --- HELPERS ---
         const getTodayStr = () => new Date().toISOString().split('T')[0];
         const formatDate = (dateStr) => { const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; };
         const formatFullDate = (dateStr) => { if (!dateStr) return ''; const d = new Date(dateStr + 'T12:00:00'); return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }); };
+
+        const SYSTEM_PARAMS = { BASE_QUESTIONS: 20, MIN_QUESTIONS: 15, MAX_QUESTIONS: 80, SPACING_FACTORS: { 'R0': 0.75, 'R1': 2.00, 'R2': 1.25, 'R3': 0.75, 'DEFAULT': 1.0 } };
 
         const calculateNextLoad = (accuracy, importanceId, difficultyId, nextStageType) => {
             const impWeight = IMPORTANCE_LEVELS.find(i => i.id === importanceId)?.weight || 1.0;
@@ -182,8 +186,7 @@
             const gap = Math.max(0, target - accuracy);
             const perfFactor = Math.min(2.2, 1 + (gap / target)); 
             const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
-            let n_float = base * perfFactor * spacingFactor * diffWeight;
-            let n = Math.round(n_float);
+            let n = Math.round(base * perfFactor * spacingFactor * diffWeight);
             if (accuracy < 0.60) { n = n + 10; }
             return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
         };
@@ -200,28 +203,26 @@
             ];
         };
 
-        const mergeTopics = (localList, cloudList) => {
-            const mergedMap = new Map();
-            localList.forEach(item => mergedMap.set(item.id, item));
-            cloudList.forEach(cloudItem => {
-                const localItem = mergedMap.get(cloudItem.id);
-                if (!localItem) { mergedMap.set(cloudItem.id, cloudItem); } 
-                else {
-                    const localTime = localItem.updatedAt || 0;
-                    const cloudTime = cloudItem.updatedAt || 0;
-                    if (cloudTime > localTime) mergedMap.set(cloudItem.id, cloudItem);
-                }
+        // --- SYNC ---
+        const mergeItems = (local, cloud) => {
+            const map = new Map();
+            local.forEach(i => map.set(i.id, i));
+            cloud.forEach(c => {
+                const l = map.get(c.id);
+                if (!l || (c.updatedAt || 0) > (l.updatedAt || 0)) map.set(c.id, c);
             });
-            return Array.from(mergedMap.values());
+            return Array.from(map.values());
         };
 
-        const useSync = (topics, setTopics) => {
+        const useSync = (topics, logs, setTopics, setLogs) => {
             const [status, setStatus] = useState('offline');
             const [config, setConfig] = useState(() => { const s = localStorage.getItem('resiflow_fb_config'); return s ? JSON.parse(s) : USER_FIREBASE_CONFIG; });
             const [syncKey, setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
             const dbRef = useRef(null);
-            const localTopicsRef = useRef(topics);
-            useEffect(() => { localTopicsRef.current = topics; }, [topics]);
+            
+            // Ref para estado mais recente
+            const stateRef = useRef({ topics, logs });
+            useEffect(() => { stateRef.current = { topics, logs }; }, [topics, logs]);
 
             useEffect(() => {
                 if (!config || !syncKey || !window.firebaseModules) return;
@@ -236,8 +237,12 @@
                         if (s.exists()) { 
                             const d = s.data(); 
                             if (d.topics) {
-                                const merged = mergeTopics(localTopicsRef.current, d.topics);
-                                if (JSON.stringify(merged) !== JSON.stringify(localTopicsRef.current)) setTopics(merged);
+                                const mergedTopics = mergeItems(stateRef.current.topics, d.topics);
+                                if (JSON.stringify(mergedTopics) !== JSON.stringify(stateRef.current.topics)) setTopics(mergedTopics);
+                            }
+                            if (d.logs) {
+                                const mergedLogs = mergeItems(stateRef.current.logs, d.logs);
+                                if (JSON.stringify(mergedLogs) !== JSON.stringify(stateRef.current.logs)) setLogs(mergedLogs);
                             }
                         }
                         setStatus('online');
@@ -246,30 +251,60 @@
                 } catch (e) { console.error(e); setStatus('error'); }
             }, [config, syncKey]);
 
-            const saveToCloud = async (newTopics) => {
+            const saveToCloud = async (newTopics, newLogs) => {
                 if (!dbRef.current || !syncKey) return;
                 try {
                     const { doc, setDoc } = window.firebaseModules;
                     const docRef = doc(dbRef.current, 'artifacts', 'resiflow', 'public', 'data', 'users', syncKey);
-                    await setDoc(docRef, { topics: newTopics, updatedAt: new Date().toISOString() }, { merge: true });
+                    await setDoc(docRef, { topics: newTopics, logs: newLogs, updatedAt: new Date().toISOString() }, { merge: true });
                 } catch (e) { console.error(e); setStatus('error'); }
             };
             return { status, config, setConfig, syncKey, setSyncKey, saveToCloud };
+        };
+
+        // --- COMPONENTS ---
+
+        const PomodoroTimer = ({ isOpen, onClose }) => {
+            if (!isOpen) return null;
+            const [timeLeft, setTimeLeft] = useState(25 * 60);
+            const [isActive, setIsActive] = useState(false);
+            const [mode, setMode] = useState('focus');
+            useEffect(() => { let i = null; if (isActive && timeLeft > 0) i = setInterval(() => setTimeLeft(t => t - 1), 1000); else if (timeLeft === 0) setIsActive(false); return () => clearInterval(i); }, [isActive, timeLeft]);
+            const toggle = () => setIsActive(!isActive);
+            const reset = () => { setIsActive(false); setTimeLeft(mode === 'focus' ? 25 * 60 : mode === 'short' ? 5 * 60 : 15 * 60); };
+            const setM = (m) => { setMode(m); setIsActive(false); setTimeLeft(m === 'focus' ? 25 * 60 : m === 'short' ? 5 * 60 : 15 * 60); };
+            const fmt = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
+            const prog = ((mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900) - timeLeft) / (mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900) * 100;
+            return (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-slate-700 flex flex-col items-center relative">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full"><X size={20} className="text-slate-400"/></button>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2"><Timer size={22} className="text-emerald-500"/> Pomodoro</h3>
+                        <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+                            {['focus', 'short', 'long'].map(m => <button key={m} onClick={() => setM(m)} className={`px-3 py-1.5 text-xs font-bold rounded-lg capitalize ${mode === m ? 'bg-white dark:bg-slate-700 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>{m}</button>)}
+                        </div>
+                        <div className="relative w-48 h-48 flex items-center justify-center mb-8">
+                            <svg className="absolute top-0 left-0 w-full h-full transform -rotate-90"><circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-slate-900"/><circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={552} strokeDashoffset={552 - (552 * prog) / 100} className="text-emerald-500 transition-all duration-1000 ease-linear" strokeLinecap="round"/></svg>
+                            <div className="text-5xl font-black text-slate-800 dark:text-white tracking-wider font-mono">{fmt(timeLeft)}</div>
+                        </div>
+                        <div className="flex gap-4"><button onClick={toggle} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${isActive ? 'bg-slate-100 dark:bg-slate-700 text-slate-600' : 'bg-emerald-500 text-white'}`}>{isActive ? <Pause/> : <Play/>}</button><button onClick={reset} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-400"><RotateCcw/></button></div>
+                    </div>
+                </div>
+            );
         };
 
         const CloudConfigModal = ({ isOpen, onClose, config, setConfig, syncKey, setSyncKey }) => {
             const [tempKey, setTempKey] = useState(syncKey);
             useEffect(() => setTempKey(syncKey), [syncKey]);
             if (!isOpen) return null;
-            const handleSave = () => { localStorage.setItem('resiflow_sync_key', tempKey); setSyncKey(tempKey); onClose(); };
             return (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-slate-700">
-                        <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><Cloud className="text-blue-500" /> Sincronização</h3><button onClick={onClose}><X className="text-slate-400" /></button></div>
+                        <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><Cloud className="text-blue-500"/> Sincronização</h3><button onClick={onClose}><X className="text-slate-400"/></button></div>
                         <div className="space-y-4">
-                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-sm text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-800"><p className="font-bold flex items-center gap-2"><CheckCircle2 size={16}/> Firebase Configurado</p><p className="text-xs opacity-80 mt-1">Projeto: <b>med-heklp</b></p></div>
-                            <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Sincronização</label><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Senha única (ex: dr-silva)" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm dark:text-white font-mono" /><p className="text-[10px] text-slate-400 mt-2">⚠ Use a mesma chave em outros dispositivos.</p></div>
-                            <button onClick={handleSave} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2"><Save size={18} /> Conectar Nuvem</button>
+                            <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl text-sm text-emerald-800 dark:text-emerald-200 border border-emerald-100 dark:border-emerald-800"><p className="font-bold flex items-center gap-2"><CheckCircle2 size={16}/> Firebase Configurado</p></div>
+                            <div><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Sincronização</label><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Senha única (ex: dr-silva)" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm dark:text-white font-mono" /></div>
+                            <button onClick={() => { localStorage.setItem('resiflow_sync_key', tempKey); setSyncKey(tempKey); onClose(); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2"><Save size={18}/> Conectar</button>
                         </div>
                     </div>
                 </div>
@@ -320,16 +355,54 @@
             )
         }
 
+        const DiaryView = ({ logs, onAddLog, onDeleteLog }) => {
+            const [type, setType] = useState('questions');
+            const [desc, setDesc] = useState('');
+            const [val, setVal] = useState('');
+            const [date, setDate] = useState(getTodayStr());
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!desc || !val) return;
+                onAddLog({ id: Date.now(), date, type, desc, val, updatedAt: Date.now(), deleted: false });
+                setDesc(''); setVal('');
+            };
+
+            const groupedLogs = useMemo(() => {
+                const groups = {};
+                logs.filter(l => !l.deleted).forEach(l => {
+                    if (!groups[l.date]) groups[l.date] = [];
+                    groups[l.date].push(l);
+                });
+                return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+            }, [logs]);
+
+            return (
+                <div className="space-y-6">
+                    <section className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Notebook size={14}/> Novo Registro Diário</h2>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                            <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data</label><input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm dark:text-white h-11" value={date} onChange={e => setDate(e.target.value)} /></div>
+                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Atividade</label><div className="relative"><select className="w-full p-2.5 pl-9 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm dark:text-white h-11 appearance-none" value={type} onChange={e => setType(e.target.value)}>{LOG_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select><div className="absolute left-3 top-3 pointer-events-none text-slate-400">{(() => { const T = LOG_TYPES.find(t => t.id === type); const I = T ? T.icon : Target; return <I size={16}/> })()}</div></div></div>
+                            <div className="md:col-span-4"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição</label><input type="text" placeholder="Ex: Aula de ECG / 20 Questões SUS" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm dark:text-white h-11" value={desc} onChange={e => setDesc(e.target.value)} /></div>
+                            <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Valor/Qtd</label><input type="text" placeholder="Ex: 50 / 30min" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm dark:text-white h-11" value={val} onChange={e => setVal(e.target.value)} /></div>
+                            <div className="md:col-span-1"><button type="submit" className="h-11 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center"><Plus size={20}/></button></div>
+                        </form>
+                    </section>
+                    <div className="space-y-6">{groupedLogs.length === 0 ? (<div className="text-center py-12 text-slate-400 dark:text-slate-600"><Notebook className="mx-auto mb-2 opacity-50" size={32}/><p>Nenhum registro ainda.</p></div>) : (groupedLogs.map(([dateStr, dayLogs]) => (<div key={dateStr}><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider sticky top-20 bg-slate-50/90 dark:bg-slate-950/90 py-2 backdrop-blur-sm z-10">{formatFullDate(dateStr)}</h3><div className="space-y-2">{dayLogs.map(log => { const logType = LOG_TYPES.find(t => t.id === log.type) || LOG_TYPES[4]; const Icon = logType.icon; return (<div key={log.id} className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center gap-3 shadow-sm group"><div className={`p-2 rounded-lg bg-slate-100 dark:bg-slate-900 ${logType.color} dark:opacity-90`}><Icon size={18}/></div><div className="flex-1"><div className="font-bold text-slate-800 dark:text-white text-sm">{log.desc}</div><div className="text-xs text-slate-500 dark:text-slate-400">{logType.label}</div></div><div className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded text-xs">{log.val}</div><button onClick={() => onDeleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={14}/></button></div>) })}</div></div>)))}</div>
+                </div>
+            );
+        };
+
         const TopicCard = ({ topic, onOpenReview, onDelete }) => {
             const [expanded, setExpanded] = useState(false);
             const [isDeleting, setIsDeleting] = useState(false);
-            const impInfo = IMPORTANCE_LEVELS.find(i => i.id === topic.importance) || IMPORTANCE_LEVELS[1];
             const areaInfo = AREAS.find(a => a.id === topic.area) || AREAS[1]; 
             const completedReviews = topic.reviews.filter(r => r.done).length;
             const progressPercent = (completedReviews / 4) * 100;
             return (
                 <div className="bg-white dark:bg-slate-850 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                    <div className="p-5 cursor-pointer flex items-center justify-between" onClick={() => setExpanded(!expanded)}><div className="flex-1"><div className="flex items-center gap-2 mb-1.5 flex-wrap"><span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${areaInfo.color}`}>{areaInfo.name}</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${impInfo.color}`}>{impInfo.label} Prioridade</span></div><h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{topic.title}</h3></div><div className="flex items-center gap-4"><div className="hidden sm:flex flex-col items-end gap-1"><span className="text-xs font-bold text-slate-400">{completedReviews}/4</span><div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{width: `${progressPercent}%`}}></div></div></div>{expanded ? <ChevronUp className="text-slate-400"/> : <ChevronDown className="text-slate-400"/>}</div></div>
+                    <div className="p-5 cursor-pointer flex items-center justify-between" onClick={() => setExpanded(!expanded)}><div className="flex-1"><div className="flex items-center gap-2 mb-1.5 flex-wrap"><span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${areaInfo.color}`}>{areaInfo.name}</span></div><h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{topic.title}</h3></div><div className="flex items-center gap-4"><div className="hidden sm:flex flex-col items-end gap-1"><span className="text-xs font-bold text-slate-400">{completedReviews}/4</span><div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{width: `${progressPercent}%`}}></div></div></div>{expanded ? <ChevronUp className="text-slate-400"/> : <ChevronDown className="text-slate-400"/>}</div></div>
                     {expanded && (<div className="px-5 pb-5 pt-0 border-t border-slate-50 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30"><div className="mt-4 space-y-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const isLocked = !rev.done && !isNext; const performance = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const dateStr = formatDate(rev.date); return (<div key={idx} className={`relative flex items-center gap-4 p-3 rounded-xl border ${isNext ? 'bg-white dark:bg-slate-800 border-blue-200 dark:border-blue-700 shadow-sm ring-1 ring-blue-500/20' : 'border-transparent'} ${isLocked ? 'opacity-50 grayscale' : ''}`}><div className={`w-1 h-10 rounded-full ${isDone ? (performance >= 90 ? 'bg-emerald-500' : 'bg-yellow-500') : (isNext ? 'bg-blue-500' : 'bg-slate-200 dark:bg-slate-700')}`}></div><div className="w-16 text-center"><div className="text-xs font-black text-slate-400 uppercase">{rev.label.split(':')[0]}</div><div className="font-bold text-slate-700 dark:text-slate-300">{dateStr}</div></div><div className="flex-1">{isDone ? (<div><div className="flex items-center gap-2"><span className={`font-bold text-lg ${performance >= 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{performance}%</span><span className="text-xs text-slate-400">({rev.correct}/{rev.total})</span></div>{rev.targetQ && <div className="text-[10px] text-slate-400">Meta: {rev.targetQ}</div>}</div>) : (<div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{rev.label.split(':')[1]}</div>{rev.targetQ && (<div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs font-medium mt-0.5"><Target size={12}/> <span>Meta: <span className="font-bold">{rev.targetQ}</span></span></div>)}</div>)}</div><div>{isDone ? (<div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><CheckCircle2 size={16}/></div>) : isNext ? (<button onClick={() => onOpenReview(topic.id, idx)} className="px-4 py-2 bg-slate-900 dark:bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 transition">Revisar</button>) : (<div className="w-8 h-8 flex items-center justify-center"><Clock size={16} className="text-slate-300 dark:text-slate-600"/></div>)}</div></div>); })}</div><div className="mt-4 flex justify-end">{isDeleting ? (<div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800 animate-in fade-in zoom-in-95 duration-200"><span className="text-xs font-bold text-red-800 dark:text-red-300">Tem certeza?</span><button onClick={() => onDelete(topic.id)} className="text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-800 border-b border-red-200 hover:border-red-600 transition-colors">Sim</button><button onClick={() => setIsDeleting(false)} className="text-xs text-slate-400 hover:text-slate-600">Cancelar</button></div>) : (<button onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }} className="text-xs text-red-400 hover:text-red-600 font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={12}/> Excluir Tema</button>)}</div></div>)}</div>
             );
         };
@@ -356,24 +429,27 @@
             );
         };
 
+        // --- MAIN APP ---
         function App() {
             const [topics, setTopics] = useState(() => JSON.parse(localStorage.getItem('resiflow_v3_data') || '[]'));
+            const [logs, setLogs] = useState(() => JSON.parse(localStorage.getItem('resiflow_logs') || '[]'));
             const [darkMode, setDarkMode] = useState(() => localStorage.getItem('resiflow_theme') === 'dark');
             const [viewMode, setViewMode] = useState('list'); 
             const [filterArea, setFilterArea] = useState('all');
             const [filterTime, setFilterTime] = useState('all'); 
+            
             const [title, setTitle] = useState('');
             const [area, setArea] = useState('clinica');
             const [importance, setImportance] = useState('medium');
             const [date, setDate] = useState(getTodayStr());
+            
             const [modalOpen, setModalOpen] = useState(false);
             const [cloudModalOpen, setCloudModalOpen] = useState(false);
+            const [pomodoroOpen, setPomodoroOpen] = useState(false);
             const [selectedTask, setSelectedTask] = useState(null);
             const [installPrompt, setInstallPrompt] = useState(null);
 
-            const { status, config, setConfig, syncKey, setSyncKey, saveToCloud } = useSync(topics, setTopics);
-
-            // --- FIX: Declare todayStr inside component ---
+            const { status, config, setConfig, syncKey, setSyncKey, saveToCloud } = useSync(topics, logs, setTopics, setLogs);
             const todayStr = getTodayStr();
 
             useEffect(() => {
@@ -382,18 +458,13 @@
                 return () => window.removeEventListener('beforeinstallprompt', handler);
             }, []);
 
-            const handleInstall = () => {
-                if (!installPrompt) return;
-                installPrompt.prompt();
-                installPrompt.userChoice.then((choice) => {
-                    if (choice.outcome === 'accepted') setInstallPrompt(null);
-                });
-            };
+            const handleInstall = () => { if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then((c) => { if(c.outcome === 'accepted') setInstallPrompt(null); }); } };
 
             useEffect(() => {
                 localStorage.setItem('resiflow_v3_data', JSON.stringify(topics));
-                if (status === 'online') { const timer = setTimeout(() => saveToCloud(topics), 1000); return () => clearTimeout(timer); }
-            }, [topics, status]);
+                localStorage.setItem('resiflow_logs', JSON.stringify(logs));
+                if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs), 1000); return () => clearTimeout(t); }
+            }, [topics, logs, status]);
 
             useEffect(() => { if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('resiflow_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('resiflow_theme', 'light'); } }, [darkMode]);
 
@@ -406,32 +477,14 @@
                 setTitle('');
             };
 
+            const handleAddLog = (log) => { setLogs(prev => [log, ...prev]); };
+            const handleDeleteLog = (id) => { setLogs(prev => prev.map(l => l.id === id ? { ...l, deleted: true, updatedAt: Date.now() } : l)); };
+
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
-            
-            // Add: Update updatedAt on review
-            // UPDATED: Pass next stage type to calculateNextLoad
-            const completeReview = (data) => { 
-                setTopics(prev => prev.map(topic => { 
-                    if (topic.id !== selectedTask.topicId) return topic; 
-                    const newReviews = [...topic.reviews]; 
-                    const currentIdx = selectedTask.reviewIdx; 
-                    newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; 
-                    
-                    if (currentIdx + 1 < newReviews.length) { 
-                        const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
-                        const nextReviewType = newReviews[currentIdx + 1].type; // 'R2', 'R3' etc
-                        const nextLoad = calculateNextLoad(accuracy, topic.importance, data.difficulty, nextReviewType); 
-                        newReviews[currentIdx + 1].targetQ = nextLoad; 
-                    } 
-                    return { ...topic, reviews: newReviews, updatedAt: Date.now() }; 
-                })); 
-            };
-            
-            // Change: Soft Delete with Timestamp
+            const completeReview = (data) => { setTopics(prev => prev.map(topic => { if (topic.id !== selectedTask.topicId) return topic; const newReviews = [...topic.reviews]; const currentIdx = selectedTask.reviewIdx; newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; if (currentIdx + 1 < newReviews.length) { const accuracy = data.total > 0 ? (data.correct / data.total) : 0; const nextReviewType = newReviews[currentIdx + 1].type; const nextLoad = calculateNextLoad(accuracy, topic.importance, data.difficulty, nextReviewType); newReviews[currentIdx + 1].targetQ = nextLoad; } return { ...topic, reviews: newReviews, updatedAt: Date.now() }; })); };
             const deleteTopic = (id) => setTopics(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: Date.now() } : t));
 
             const sortedTopics = useMemo(() => {
-                // Filter out soft-deleted items for display
                 let list = [...topics].filter(t => !t.deleted);
                 if (filterArea !== 'all') list = list.filter(t => t.area === filterArea);
                 list.sort((a, b) => { const getNextDate = (t) => t.reviews.find(r => !r.done)?.date || '9999-99-99'; const dateA = getNextDate(a); const dateB = getNextDate(b); const aDue = dateA <= todayStr; const bDue = dateB <= todayStr; if (aDue && !bDue) return -1; if (!aDue && bDue) return 1; return dateA.localeCompare(dateB); });
@@ -441,71 +494,63 @@
 
             return (
                 <div className="min-h-screen pb-12 transition-colors duration-300">
-                    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-6 px-4 sticky top-0 z-40 transition-colors">
+                    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-4 px-4 sticky top-0 z-40 transition-colors shadow-sm dark:shadow-none">
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div><h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v3.6</span></h1></div>
+                            <div><h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v4.0</span></h1></div>
                             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-                                {installPrompt && (<button onClick={handleInstall} className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 border flex items-center gap-2 font-bold text-xs"><Download size={16}/> Instalar App</button>)}
-                                <button onClick={() => setCloudModalOpen(true)} className={`p-2 rounded-lg transition border flex items-center gap-2 ${status === 'online' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'}`}>{status === 'online' ? <Cloud size={18}/> : <CloudOff size={18}/>}<span className="text-xs font-bold hidden sm:inline">{status === 'online' ? 'Sincronizado' : 'Offline'}</span></button>
-                                <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div><button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
+                                {installPrompt && (<button onClick={handleInstall} className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 border flex items-center gap-2 font-bold text-xs"><Download size={16}/> App</button>)}
+                                <button onClick={() => setPomodoroOpen(true)} className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 border flex items-center gap-2 font-bold text-xs"><Timer size={16}/></button>
+                                <button onClick={() => setCloudModalOpen(true)} className={`p-2 rounded-lg transition border flex items-center gap-2 ${status === 'online' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'}`}>{status === 'online' ? <Cloud size={18}/> : <CloudOff size={18}/>}</button>
+                                <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
                                 <div className="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg"><button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-2 transition ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><List size={14}/> Lista</button><button onClick={() => setViewMode('calendar')} className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-2 transition ${viewMode === 'calendar' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><LayoutGrid size={14}/> Calendário</button></div>
+                                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                                    <button onClick={() => setViewMode('list')} className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-2 transition ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><List size={14}/> <span className="hidden sm:inline">Lista</span></button>
+                                    <button onClick={() => setViewMode('calendar')} className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-2 transition ${viewMode === 'calendar' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><CalendarIcon size={14}/> <span className="hidden sm:inline">Cal.</span></button>
+                                    <button onClick={() => setViewMode('diary')} className={`px-3 py-1.5 text-xs font-bold rounded-md flex items-center gap-2 transition ${viewMode === 'diary' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><Notebook size={14}/> <span className="hidden sm:inline">Diário</span></button>
+                                </div>
                             </div>
                         </div>
                     </header>
 
                     <main className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-                        <section className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
-                            <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Plus size={14}/> Novo Conteúdo Teórico</h2>
-                            <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                                <div className="md:col-span-4">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Assunto</label>
-                                    <input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-11" value={title} onChange={e => setTitle(e.target.value)} />
-                                </div>
-                                <div className="md:col-span-3">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Área</label>
-                                    <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={area} onChange={e => setArea(e.target.value)}>
-                                        {AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2">
-                                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prioridade</label>
-                                     <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={importance} onChange={e => setImportance(e.target.value)}>
-                                        {IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
-                                    </select>
-                                </div>
-                                <div className="md:col-span-2">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Aula</label>
-                                    <input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-11" value={date} onChange={e => setDate(e.target.value)} />
-                                </div>
-                                <div className="md:col-span-1">
-                                    <button type="submit" className="h-11 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center">Add</button>
-                                </div>
-                            </form>
-                        </section>
+                        {viewMode === 'diary' ? (
+                            <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} />
+                        ) : (
+                            <>
+                                <section className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 transition-colors">
+                                    <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Plus size={14}/> Novo Conteúdo Teórico</h2>
+                                    <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                        <div className="md:col-span-4"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Assunto</label><input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-11" value={title} onChange={e => setTitle(e.target.value)} /></div>
+                                        <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Área</label><select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={area} onChange={e => setArea(e.target.value)}>{AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+                                        <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prioridade</label><select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={importance} onChange={e => setImportance(e.target.value)}>{IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}</select></div>
+                                        <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Aula</label><input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-11" value={date} onChange={e => setDate(e.target.value)} /></div>
+                                        <div className="md:col-span-1"><button type="submit" className="h-11 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center">Add</button></div>
+                                    </form>
+                                </section>
 
-                        {viewMode === 'list' && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                <button onClick={() => setFilterTime(filterTime === 'all' ? 'today' : 'all')} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterTime === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>{filterTime === 'today' ? '📅 Apenas Hoje' : '📅 Mostrar Tudo'}</button>
-                                <div className="w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
-                                {AREAS.map(a => (
-                                    <button key={a.id} onClick={() => setFilterArea(a.id)} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterArea === a.id ? `${a.color} shadow-sm` : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100'}`}>{a.name}</button>
-                                ))}
-                            </div>
+                                {viewMode === 'list' && (
+                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                        <button onClick={() => setFilterTime(filterTime === 'all' ? 'today' : 'all')} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterTime === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-blue-300'}`}>{filterTime === 'today' ? '📅 Apenas Hoje' : '📅 Mostrar Tudo'}</button>
+                                        <div className="w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+                                        {AREAS.map(a => <button key={a.id} onClick={() => setFilterArea(a.id)} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterArea === a.id ? `${a.color} shadow-sm` : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 opacity-70 hover:opacity-100'}`}>{a.name}</button>)}
+                                    </div>
+                                )}
+
+                                <section className="space-y-4">
+                                    {viewMode === 'calendar' ? ( <CalendarView topics={topics} /> ) : (
+                                        <>
+                                            {sortedTopics.length === 0 ? (
+                                                <div className="text-center py-12 text-slate-400 dark:text-slate-600"><BookOpen className="mx-auto mb-2 opacity-50" size={32} /><p>Nenhum tema encontrado com estes filtros.</p></div>
+                                            ) : ( sortedTopics.map(topic => ( <TopicCard key={topic.id} topic={topic} onOpenReview={openReview} onDelete={deleteTopic} /> )) )}
+                                        </>
+                                    )}
+                                </section>
+                            </>
                         )}
-
-                        <section className="space-y-4">
-                            {viewMode === 'calendar' ? ( <CalendarView topics={topics} /> ) : (
-                                <>
-                                    {sortedTopics.length === 0 ? (
-                                        <div className="text-center py-12 text-slate-400 dark:text-slate-600"><BookOpen className="mx-auto mb-2 opacity-50" size={32} /><p>Nenhum tema encontrado com estes filtros.</p></div>
-                                    ) : ( sortedTopics.map(topic => ( <TopicCard key={topic.id} topic={topic} onOpenReview={openReview} onDelete={deleteTopic} /> )) )}
-                                </>
-                            )}
-                        </section>
                     </main>
                     <ModalReview isOpen={modalOpen} onClose={() => setModalOpen(false)} task={selectedTask} onSave={completeReview} />
                     <CloudConfigModal isOpen={cloudModalOpen} onClose={() => setCloudModalOpen(false)} config={config} setConfig={setConfig} syncKey={syncKey} setSyncKey={setSyncKey} />
+                    <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
                 </div>
             );
         }

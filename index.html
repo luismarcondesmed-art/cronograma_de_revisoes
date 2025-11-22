@@ -43,6 +43,15 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        
+        /* Fix específico para remover ícone de calendário nativo se necessário e alinhar texto */
+        input[type="date"] {
+            display: block;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            line-height: 1.2; /* Ajuste fino para alinhamento vertical */
+        }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
@@ -51,7 +60,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- Adaptador de Ícones (Correção do Erro #130) ---
+        // --- Adaptador de Ícones ---
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
@@ -337,11 +346,14 @@
                             <div className="space-y-2">
                                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Dificuldade</label>
                                 <div className="grid grid-cols-3 gap-2">
-                                    {DIFFICULTY_LEVELS.map(lvl => (
-                                        <button key={lvl.id} type="button" onClick={() => setDifficulty(lvl.id)} className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all border-2 ${difficulty === lvl.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:border-slate-200 dark:hover:border-slate-600'}`}>
-                                            <lvl.icon size={20} /> <span className="text-xs font-bold">{lvl.label}</span>
-                                        </button>
-                                    ))}
+                                    {DIFFICULTY_LEVELS.map(lvl => {
+                                        const Icon = lvl.icon;
+                                        return (
+                                            <button key={lvl.id} type="button" onClick={() => setDifficulty(lvl.id)} className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all border-2 ${difficulty === lvl.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-400 hover:border-slate-200 dark:hover:border-slate-600'}`}>
+                                                <Icon size={20} /> <span className="text-xs font-bold">{lvl.label}</span>
+                                            </button>
+                                        )
+                                    })}
                                 </div>
                             </div>
                             <div className="relative">
@@ -643,7 +655,7 @@
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
                             <div>
                                 <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white">
-                                    <Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v3.3</span>
+                                    <Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v3.4</span>
                                 </h1>
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
@@ -671,26 +683,26 @@
                             <form onSubmit={handleAdd} className="flex flex-col md:flex-row gap-3">
                                 <div className="flex-1">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Assunto</label>
-                                    <input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400" value={title} onChange={e => setTitle(e.target.value)} />
+                                    <input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-11" value={title} onChange={e => setTitle(e.target.value)} />
                                 </div>
                                 <div className="w-full md:w-32">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Área</label>
-                                    <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" value={area} onChange={e => setArea(e.target.value)}>
+                                    <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={area} onChange={e => setArea(e.target.value)}>
                                         {AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                                     </select>
                                 </div>
                                 <div className="w-full md:w-32">
                                      <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prioridade</label>
-                                     <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white" value={importance} onChange={e => setImportance(e.target.value)}>
+                                     <select className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-11" value={importance} onChange={e => setImportance(e.target.value)}>
                                         {IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}
                                     </select>
                                 </div>
                                 <div className="w-full md:w-32">
                                     <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data Aula</label>
-                                    <input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark]" value={date} onChange={e => setDate(e.target.value)} />
+                                    <input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-11" value={date} onChange={e => setDate(e.target.value)} />
                                 </div>
                                 <div className="flex items-end">
-                                    <button type="submit" className="h-[42px] bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-6 text-sm transition">Adicionar</button>
+                                    <button type="submit" className="h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl px-6 text-sm transition">Adicionar</button>
                                 </div>
                             </form>
                         </section>

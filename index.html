@@ -62,7 +62,7 @@
         const manifest = { name: "ResiFlow", short_name: "ResiFlow", start_url: ".", display: "standalone", background_color: "#ffffff", theme_color: "#0f172a", icons: [{ src: iconUrl, sizes: "512x512", type: "image/svg+xml" }] };
         const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = 'data:application/json;base64,' + btoa(JSON.stringify(manifest)); document.head.appendChild(linkManifest);
 
-        if ('serviceWorker' in navigator) {
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
             try {
                 const swContent = `self.addEventListener('fetch', e => { return; });`;
                 const blob = new Blob([swContent], {type: 'text/javascript'});
@@ -132,9 +132,9 @@
         ];
 
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 1.5, color: 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800' },
-            { id: 'medium', label: 'Média', weight: 1.0, color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' },
-            { id: 'low', label: 'Baixa', weight: 0.8, color: 'text-slate-600 bg-slate-50 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
+            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800' },
+            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800' },
+            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-600 bg-slate-50 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
         ];
 
         const DIFFICULTY_LEVELS = [
@@ -143,73 +143,69 @@
             { id: 'hard', label: 'Difícil', weight: 1.3, icon: ThumbsDown },
         ];
 
-        // --- Helpers ---
+        const SYSTEM_PARAMS = {
+            BASE_QUESTIONS: 20,
+            MIN_QUESTIONS: 15,
+            MAX_QUESTIONS: 80,
+            SPACING_FACTORS: {
+                'R0': 0.75, 
+                'R1': 2.00, 
+                'R2': 1.25, 
+                'R3': 0.75, 
+                'DEFAULT': 1.0
+            }
+        };
+
         const getTodayStr = () => new Date().toISOString().split('T')[0];
         const formatDate = (dateStr) => { const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; };
         const formatFullDate = (dateStr) => { if (!dateStr) return ''; const d = new Date(dateStr + 'T12:00:00'); return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }); };
 
-        const calculateNextLoad = (total, accuracy, impId, diffId) => {
-            let base = total > 0 ? total : 20;
+        const calculateNextLoad = (accuracy, importanceId, difficultyId, nextStageType) => {
+            const impWeight = IMPORTANCE_LEVELS.find(i => i.id === importanceId)?.weight || 1.0;
+            const base = SYSTEM_PARAMS.BASE_QUESTIONS * impWeight;
+            const spacingFactor = SYSTEM_PARAMS.SPACING_FACTORS[nextStageType] || SYSTEM_PARAMS.SPACING_FACTORS['DEFAULT'];
             const target = 0.90;
             const gap = Math.max(0, target - accuracy);
-            const gapFactor = 1 + (gap * 2.0);
-            const impW = IMPORTANCE_LEVELS.find(i => i.id === impId)?.weight || 1.0;
-            const diffW = DIFFICULTY_LEVELS.find(d => d.id === diffId)?.weight || 1.0;
-            const decay = 0.7;
-            let next = Math.ceil((base * decay) * gapFactor * impW * diffW);
-            return Math.max(10, Math.min(next, 60));
+            const perfFactor = Math.min(2.2, 1 + (gap / target)); 
+            const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
+            let n_float = base * perfFactor * spacingFactor * diffWeight;
+            let n = Math.round(n_float);
+            if (accuracy < 0.60) { n = n + 10; }
+            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
         };
 
-        const generateSchedule = (studyDate, impId) => {
+        const generateSchedule = (studyDate, importanceId) => {
             const d0 = new Date(studyDate + 'T12:00:00');
             const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
-            const w = IMPORTANCE_LEVELS.find(i => i.id === impId)?.weight || 1.0;
+            const getInitialQ = (stage) => calculateNextLoad(1.0, importanceId, 'medium', stage);
             return [
-                { type: 'R0', date: studyDate, label: 'R0: Fixação', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: Math.ceil(15 * w) },
-                { type: 'R1', date: addDays(d0, 21), label: 'R1: Pico', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: Math.ceil(40 * w) },
-                { type: 'R2', date: addDays(d0, 51), label: 'R2: Manutenção', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: Math.ceil(25 * w) },
-                { type: 'R3', date: addDays(d0, 81), label: 'R3: Longo Prazo', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: Math.ceil(15 * w) }
+                { type: 'R0', date: studyDate, label: 'R0: Fixação', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: getInitialQ('R0') },
+                { type: 'R1', date: addDays(d0, 7), label: 'R1: Pico', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: getInitialQ('R1') },
+                { type: 'R2', date: addDays(d0, 30), label: 'R2: Manutenção', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: getInitialQ('R2') },
+                { type: 'R3', date: addDays(d0, 60), label: 'R3: Longo Prazo', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: getInitialQ('R3') }
             ];
         };
 
-        // --- Lógica de Merge Inteligente ---
         const mergeTopics = (localList, cloudList) => {
             const mergedMap = new Map();
-
-            // Adiciona todos os locais ao mapa
             localList.forEach(item => mergedMap.set(item.id, item));
-
-            // Processa os da nuvem
             cloudList.forEach(cloudItem => {
                 const localItem = mergedMap.get(cloudItem.id);
-                
-                if (!localItem) {
-                    // Novo item da nuvem
-                    mergedMap.set(cloudItem.id, cloudItem);
-                } else {
-                    // Conflito: vence o mais recente
-                    // Se não tiver updatedAt (legado), assume 0
+                if (!localItem) { mergedMap.set(cloudItem.id, cloudItem); } 
+                else {
                     const localTime = localItem.updatedAt || 0;
                     const cloudTime = cloudItem.updatedAt || 0;
-
-                    if (cloudTime > localTime) {
-                        mergedMap.set(cloudItem.id, cloudItem);
-                    }
-                    // Se local for mais recente, mantém local (não faz nada)
+                    if (cloudTime > localTime) mergedMap.set(cloudItem.id, cloudItem);
                 }
             });
-
             return Array.from(mergedMap.values());
         };
 
-        // --- Hooks & Firebase Logic ---
         const useSync = (topics, setTopics) => {
             const [status, setStatus] = useState('offline');
             const [config, setConfig] = useState(() => { const s = localStorage.getItem('resiflow_fb_config'); return s ? JSON.parse(s) : USER_FIREBASE_CONFIG; });
             const [syncKey, setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
             const dbRef = useRef(null);
-            
-            // Ref para manter acesso ao estado mais atual dentro do listener do Firebase
             const localTopicsRef = useRef(topics);
             useEffect(() => { localTopicsRef.current = topics; }, [topics]);
 
@@ -222,18 +218,12 @@
                     dbRef.current = db;
                     const docRef = doc(db, 'artifacts', 'resiflow', 'public', 'data', 'users', syncKey);
                     setStatus('syncing');
-                    
                     const unsub = onSnapshot(docRef, (s) => {
                         if (s.exists()) { 
                             const d = s.data(); 
                             if (d.topics) {
-                                // MERGE INTELIGENTE AQUI
                                 const merged = mergeTopics(localTopicsRef.current, d.topics);
-                                
-                                // Só atualiza se houver mudança real para evitar loops
-                                if (JSON.stringify(merged) !== JSON.stringify(localTopicsRef.current)) {
-                                    setTopics(merged);
-                                }
+                                if (JSON.stringify(merged) !== JSON.stringify(localTopicsRef.current)) setTopics(merged);
                             }
                         }
                         setStatus('online');
@@ -369,6 +359,9 @@
 
             const { status, config, setConfig, syncKey, setSyncKey, saveToCloud } = useSync(topics, setTopics);
 
+            // --- FIX: Declare todayStr inside component ---
+            const todayStr = getTodayStr();
+
             useEffect(() => {
                 const handler = (e) => { e.preventDefault(); setInstallPrompt(e); };
                 window.addEventListener('beforeinstallprompt', handler);
@@ -390,7 +383,6 @@
 
             useEffect(() => { if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('resiflow_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('resiflow_theme', 'light'); } }, [darkMode]);
 
-            // Add: Include updatedAt and deleted:false in new topics
             const handleAdd = (e) => {
                 e.preventDefault();
                 if (!title) return;
@@ -402,15 +394,26 @@
 
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
             
-            // Add: Update updatedAt on review
-            const completeReview = (data) => { setTopics(prev => prev.map(topic => { if (topic.id !== selectedTask.topicId) return topic; const newReviews = [...topic.reviews]; const currentIdx = selectedTask.reviewIdx; newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; if (currentIdx + 1 < newReviews.length) { const accuracy = data.total > 0 ? (data.correct / data.total) : 0; const nextLoad = calculateNextLoad(data.total, accuracy, topic.importance, data.difficulty); newReviews[currentIdx + 1].targetQ = nextLoad; } return { ...topic, reviews: newReviews, updatedAt: Date.now() }; })); };
+            const completeReview = (data) => { 
+                setTopics(prev => prev.map(topic => { 
+                    if (topic.id !== selectedTask.topicId) return topic; 
+                    const newReviews = [...topic.reviews]; 
+                    const currentIdx = selectedTask.reviewIdx; 
+                    newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; 
+                    
+                    if (currentIdx + 1 < newReviews.length) { 
+                        const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
+                        const nextReviewType = newReviews[currentIdx + 1].type; 
+                        const nextLoad = calculateNextLoad(accuracy, topic.importance, data.difficulty, nextReviewType); 
+                        newReviews[currentIdx + 1].targetQ = nextLoad; 
+                    } 
+                    return { ...topic, reviews: newReviews, updatedAt: Date.now() }; 
+                })); 
+            };
             
-            // Change: Soft Delete with Timestamp
             const deleteTopic = (id) => setTopics(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: Date.now() } : t));
 
-            const todayStr = getTodayStr();
             const sortedTopics = useMemo(() => {
-                // Filter out soft-deleted items for display
                 let list = [...topics].filter(t => !t.deleted);
                 if (filterArea !== 'all') list = list.filter(t => t.area === filterArea);
                 list.sort((a, b) => { const getNextDate = (t) => t.reviews.find(r => !r.done)?.date || '9999-99-99'; const dateA = getNextDate(a); const dateB = getNextDate(b); const aDue = dateA <= todayStr; const bDue = dateB <= todayStr; if (aDue && !bDue) return -1; if (!aDue && bDue) return 1; return dateA.localeCompare(dateB); });
@@ -422,7 +425,7 @@
                 <div className="min-h-screen pb-12 transition-colors duration-300">
                     <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-6 px-4 sticky top-0 z-40 transition-colors">
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div><h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v3.5</span></h1></div>
+                            <div><h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow <span className="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-500 dark:text-slate-400 font-normal">v3.6</span></h1></div>
                             <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
                                 {installPrompt && (<button onClick={handleInstall} className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 border flex items-center gap-2 font-bold text-xs"><Download size={16}/> Instalar App</button>)}
                                 <button onClick={() => setCloudModalOpen(true)} className={`p-2 rounded-lg transition border flex items-center gap-2 ${status === 'online' ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'}`}>{status === 'online' ? <Cloud size={18}/> : <CloudOff size={18}/>}<span className="text-xs font-bold hidden sm:inline">{status === 'online' ? 'Sincronizado' : 'Offline'}</span></button>

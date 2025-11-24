@@ -562,11 +562,21 @@
                                 ) : (
                                     getReviewsForDate(selectedDate).map((item, i) => {
                                         const areaInfo = AREAS.find(a => a.id === item.topic.area) || AREAS[0];
-                                        const accuracy = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0;
-                                        const targetQ = item.review.targetQ || 0;
+                                        const colorMap = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' };
+                                        const colorName = colorMap[item.topic.area] || 'blue';
                                         
+                                        const accuracy = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0;
+                                        
+                                        const questionsDisplay = item.review.done 
+                                            ? `${item.review.correct}/${item.review.total} acertos`
+                                            : (item.review.targetQ > 0 ? `Meta: ${item.review.targetQ}q` : 'Revisão');
+
                                         return (
-                                            <div key={i} className={`p-4 rounded-xl border relative overflow-hidden ${item.review.done ? 'bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm'}`}>
+                                            <div key={i} className={`p-4 rounded-xl border relative overflow-hidden ${
+                                                item.review.done 
+                                                ? `bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80` 
+                                                : `bg-white dark:bg-zinc-900 border-slate-200 dark:border-${colorName}-500/30 shadow-sm`
+                                            }`}>
                                                 {/* Faixa colorida lateral indicando a área */}
                                                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div>
                                                 
@@ -581,7 +591,7 @@
                                                         <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div>
                                                         <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                                             <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span>
-                                                            <span>{item.review.label.split(':')[1]} • {targetQ > 0 ? `${targetQ}q` : 'Revisão'}</span>
+                                                            <span>{item.review.label.split(':')[1]} • {questionsDisplay}</span>
                                                         </div>
                                                     </div>
 
@@ -663,7 +673,7 @@
             const c = colorMap[topic.area] || 'blue';
 
             return (
-                <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-white/5`}>
+                <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-${c}-900/50`}>
                     <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
                         <div className="flex justify-between items-start">
                             <div className="flex-1 pr-4">
@@ -793,13 +803,7 @@
             const [filter, setFilter] = useState('all');
             const [areaFilter, setAreaFilter] = useState('all');
             const [searchTerm, setSearchTerm] = useState('');
-            
-            // 1. Sincronização de Tema Inteligente
-            const [darkMode, setDarkMode] = useState(() => {
-                const saved = localStorage.getItem('resiflow_theme');
-                if (saved !== null) return saved === 'dark';
-                return window.matchMedia('(prefers-color-scheme: dark)').matches;
-            });
+            const [darkMode, setDarkMode] = useState(() => localStorage.getItem('resiflow_theme') === 'dark');
             
             const [modalAddOpen, setModalAddOpen] = useState(false);
             const [reviewModalData, setReviewModalData] = useState(null);
@@ -810,6 +814,7 @@
 
             const { status, syncKey, setSyncKey, saveToCloud } = useSync(topics, logs, setTopics, setLogs);
 
+            // Correção de Bug 1: Sincronização robusta de Tema e Meta Tags
             useEffect(() => {
                 if (darkMode) {
                     document.documentElement.classList.add('dark');
@@ -820,49 +825,11 @@
                 }
             }, [darkMode]);
 
-            // Listener para mudanças de tema do sistema se o usuário não tiver preferência manual
-            useEffect(() => {
-                const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-                const handleChange = (e) => {
-                    if (localStorage.getItem('resiflow_theme') === null) {
-                        setDarkMode(e.matches);
-                    }
-                };
-                mediaQuery.addEventListener('change', handleChange);
-                return () => mediaQuery.removeEventListener('change', handleChange);
-            }, []);
-
             useEffect(() => {
                 localStorage.setItem('resiflow_v3_data', JSON.stringify(topics));
                 localStorage.setItem('resiflow_logs', JSON.stringify(logs));
                 if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs), 2000); return () => clearTimeout(t); }
             }, [topics, logs, status]);
-
-            // 2. Notificações Diárias
-            useEffect(() => {
-                const checkDailyReviews = async () => {
-                    if (!("Notification" in window) || Notification.permission !== "granted") return;
-                    
-                    const today = getTodayStr();
-                    const pendingReviews = topics.filter(t => 
-                        !t.deleted && t.reviews.some(r => !r.done && r.date === today)
-                    );
-
-                    if (pendingReviews.length > 0) {
-                        // Verifica se já notificou hoje para não spammar
-                        const lastNotified = localStorage.getItem('resiflow_last_notification');
-                        if (lastNotified !== today) {
-                            new Notification("ResiFlow - Revisões de Hoje", {
-                                body: `Você tem ${pendingReviews.length} revisões pendentes para hoje. Mantenha o foco!`,
-                                icon: "icon.svg"
-                            });
-                            localStorage.setItem('resiflow_last_notification', today);
-                        }
-                    }
-                };
-                
-                checkDailyReviews();
-            }, [topics]);
 
             const visibleTopics = useMemo(() => {
                 let list = topics.filter(t => !t.deleted);

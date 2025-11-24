@@ -20,7 +20,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
+            darkMode: 'class', // Importante: Tailwind procura a classe 'dark' no HTML
             theme: {
                 extend: {
                     colors: {
@@ -61,17 +61,19 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
-        /* CONTROLE GLOBAL DE CORES E TEMA - CORRIGE O BUG DO FUNDO */
+        /* VARIÁVEIS CSS REATIVAS À CLASSE DARK */
         :root {
             --bg-color: #f8fafc; /* slate-50 */
             --text-color: #0f172a; /* slate-900 */
         }
         
+        /* Quando a classe 'dark' é adicionada ao HTML pelo React, essas variáveis mudam */
         html.dark {
             --bg-color: #09090b; /* zinc-950 */
             --text-color: #e2e8f0; /* slate-200 */
         }
 
+        /* Aplica as variáveis ao HTML e BODY para garantir cobertura total no iOS */
         html, body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
@@ -101,6 +103,7 @@
         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
     </style>
 </head>
+<!-- Removemos as classes do Tailwind daqui para evitar conflito com o CSS global -->
 <body class="selection:bg-blue-500 selection:text-white">
     <div id="root" class="h-full"></div>
 
@@ -268,12 +271,13 @@
             const stateRef = useRef({ topics, logs });
             useEffect(() => { stateRef.current = { topics, logs }; }, [topics, logs]);
 
+            // BUG FIX: Auth Logic + Sync
             useEffect(() => {
                 if (!config || !syncKey || !window.firebaseModules) return;
                 try {
                     const { initializeApp, getFirestore, doc, onSnapshot, getAuth, signInAnonymously } = window.firebaseModules;
                     let app;
-                    try { app = initializeApp(config); } catch(e) { app = window.firebaseModules.app; }
+                    try { app = initializeApp(config); } catch(e) { app = window.firebaseModules.app; } // Handle existing app
                     
                     const auth = getAuth();
                     signInAnonymously(auth).then(() => {
@@ -716,9 +720,9 @@
 
             return (
                 <div className="min-h-screen pb-32 md:pb-10 relative overflow-x-hidden pt-safe">
-                    <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-                        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[100px]"></div>
-                        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/10 dark:bg-purple-600/10 rounded-full blur-[100px]"></div>
+                    <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
+                        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/5 dark:bg-blue-600/5 rounded-full blur-[160px]"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/5 dark:bg-purple-600/5 rounded-full blur-[160px]"></div>
                     </div>
 
                     <header className="fixed top-0 w-full z-40 glass border-b border-slate-200/50 dark:border-white/5 transition-all pt-safe">

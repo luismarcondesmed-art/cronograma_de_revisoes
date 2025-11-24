@@ -150,9 +150,9 @@
         ];
 
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 dark:text-red-400' },
-            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 dark:text-yellow-400' },
-            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400' },
+            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
+            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
+            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400', baseQ: 20 },
         ];
 
         const DIFFICULTY_LEVELS = [
@@ -177,45 +177,66 @@
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
 
-        const SYSTEM_PARAMS = { BASE_QUESTIONS: 20, MIN_QUESTIONS: 15, MAX_QUESTIONS: 100 };
+        const SYSTEM_PARAMS = { 
+            MIN_QUESTIONS: 15, 
+            MAX_QUESTIONS: 100,
+            TARGET_ACCURACY: 0.80 
+        };
 
+        // --- CÁLCULO HÍBRIDO ENCADEADO (CORRIGIDO) ---
         const calculateNextLoad = (previousTotal, accuracy, importanceId, difficultyId, nextStageType) => {
-            const impWeight = IMPORTANCE_LEVELS.find(i => i.id === importanceId)?.weight || 1.0;
-            const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
-            const target = 0.90;
-            const gap = Math.max(0, target - accuracy);
-            const perfFactor = Math.min(2.2, 1 + (gap / target)); 
-
-            let base = previousTotal || 20;
-
-            // REGRA R1 Fixa: 30/50/70
-            if (nextStageType === 'R1') {
-                if (difficultyId === 'easy') base = 30;
-                else if (difficultyId === 'medium') base = 50;
-                else if (difficultyId === 'hard') base = 70;
-                else base = 50;
-            } else {
-                base = base * 0.7; 
+            // Se não há histórico (ex: criação do cronograma), usa a base de importância como 'previousTotal'
+            // Isso corrige o erro de "0" inicial.
+            let base = previousTotal;
+            if (!base || base === 0 || isNaN(base)) {
+                const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
+                base = impObj.baseQ;
             }
 
-            const factors = impWeight * perfFactor * (nextStageType === 'R1' ? 1 : diffWeight);
-            let n = Math.round(base * factors);
-            if (accuracy < 0.60) { n = n + 10; }
-            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
+            // Fatores de Multiplicação (Pico em R1, depois queda/manutenção)
+            let stageMultiplier = 1.0;
+            if (nextStageType === 'R1') stageMultiplier = 2.0; // Dobra a carga do R0
+            else if (nextStageType === 'R2') stageMultiplier = 0.6; // Cai para 60% do pico
+            else if (nextStageType === 'R3') stageMultiplier = 1.0; // Mantém
+
+            // Fatores de Ajuste Fino
+            const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
+            
+            // Performance: Meta 80%. Se <80%, aumenta a carga para compensar o gap.
+            const target = SYSTEM_PARAMS.TARGET_ACCURACY;
+            const gap = Math.max(0, target - accuracy);
+            const perfMultiplier = 1 + (gap / target); // Ex: 50% acerto -> gap 0.3 -> 1.375x
+
+            // Cálculo Final
+            let nextQ = Math.ceil(base * stageMultiplier * diffWeight * perfMultiplier);
+
+            // Regra de Ouro (<60% = +10q)
+            if (accuracy < 0.60) {
+                nextQ += 10;
+            }
+
+            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(nextQ, SYSTEM_PARAMS.MAX_QUESTIONS));
         };
 
         const generateSchedule = (studyDate, importanceId) => {
             const d0 = new Date(studyDate + 'T12:00:00');
             const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
             
-            const impWeight = IMPORTANCE_LEVELS.find(i => i.id === importanceId)?.weight || 1.0;
-            const qR0 = Math.ceil(15 * impWeight);
+            // R0: Base Fixa da Importância (20, 25, 30)
+            const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
+            const qR0 = impObj.baseQ;
+
+            // Projeção Encadeada (Simulando Acerto 100%, Dif Média)
+            // Passamos o resultado de um como base para o outro
+            const qR1_Proj = calculateNextLoad(qR0, 1.0, importanceId, 'medium', 'R1');
+            const qR2_Proj = calculateNextLoad(qR1_Proj, 1.0, importanceId, 'medium', 'R2');
+            const qR3_Proj = calculateNextLoad(qR2_Proj, 1.0, importanceId, 'medium', 'R3');
 
             return [
                 { type: 'R0', date: studyDate, label: 'R0: Fixação', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR0 },
-                { type: 'R1', date: addDays(d0, 7), label: 'R1: Pico', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: 0 }, 
-                { type: 'R2', date: addDays(d0, 30), label: 'R2: Manutenção', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: 0 }, 
-                { type: 'R3', date: addDays(d0, 60), label: 'R3: Longo Prazo', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: 0 } 
+                { type: 'R1', date: addDays(d0, 7), label: 'R1: Pico', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR1_Proj }, 
+                { type: 'R2', date: addDays(d0, 30), label: 'R2: Manutenção', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR2_Proj }, 
+                { type: 'R3', date: addDays(d0, 60), label: 'R3: Longo Prazo', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR3_Proj } 
             ];
         };
 
@@ -241,6 +262,7 @@
                     setLogs([]);   
                 }
                 _setSyncKey(newKey);
+                localStorage.setItem('resiflow_sync_key', newKey);
             };
 
             const dbRef = useRef(null);
@@ -294,7 +316,6 @@
             useEffect(() => setTempKey(syncKey), [syncKey]);
 
             const handleSyncSave = () => {
-                localStorage.setItem('resiflow_sync_key', tempKey);
                 setSyncKey(tempKey);
                 onClose();
             };
@@ -552,7 +573,6 @@
             const days = [];
             for (let i = 0; i < startDay; i++) days.push(null);
             for (let i = 1; i <= daysInMonth; i++) days.push(i);
-            
             const getReviewsForDate = (dateStr) => { 
                 const list = []; 
                 topics.forEach(topic => { 
@@ -572,7 +592,6 @@
                 }); 
                 return list; 
             };
-
             return (
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 capitalize">{today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
@@ -625,6 +644,7 @@
             const [date, setDate] = useState(getTodayStr());
             const [link, setLink] = useState('');
             const [modalOpen, setModalOpen] = useState(false);
+            const [cloudModalOpen, setCloudModalOpen] = useState(false);
             const [settingsOpen, setSettingsOpen] = useState(false);
             const [pomodoroOpen, setPomodoroOpen] = useState(false);
             const [selectedTask, setSelectedTask] = useState(null);
@@ -656,7 +676,27 @@
             const handleDeleteLog = (id) => { setLogs(prev => prev.map(l => l.id === id ? { ...l, deleted: true, updatedAt: Date.now() } : l)); };
 
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
-            const completeReview = (data) => { setTopics(prev => prev.map(topic => { if (topic.id !== selectedTask.topicId) return topic; const newReviews = [...topic.reviews]; const currentIdx = selectedTask.reviewIdx; newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; if (currentIdx + 1 < newReviews.length) { const accuracy = data.total > 0 ? (data.correct / data.total) : 0; const nextReviewType = newReviews[currentIdx + 1].type; const nextLoad = calculateNextLoad(data.total, accuracy, topic.importance, data.difficulty, nextReviewType); newReviews[currentIdx + 1].targetQ = nextLoad; } return { ...topic, reviews: newReviews, updatedAt: Date.now() }; })); };
+            
+            // CORREÇÃO: Agora passando data.total como previousTotal
+            const completeReview = (data) => { 
+                setTopics(prev => prev.map(topic => { 
+                    if (topic.id !== selectedTask.topicId) return topic; 
+                    const newReviews = [...topic.reviews]; 
+                    const currentIdx = selectedTask.reviewIdx; 
+                    newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; 
+                    if (currentIdx + 1 < newReviews.length) { 
+                        const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
+                        const nextReviewType = newReviews[currentIdx + 1].type; 
+                        
+                        // CORREÇÃO CRÍTICA: data.total passado como primeiro argumento
+                        const nextLoad = calculateNextLoad(data.total, accuracy, topic.importance, data.difficulty, nextReviewType); 
+                        
+                        newReviews[currentIdx + 1].targetQ = nextLoad; 
+                    } 
+                    return { ...topic, reviews: newReviews, updatedAt: Date.now() }; 
+                })); 
+            };
+            
             const deleteTopic = (id) => setTopics(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: Date.now() } : t));
 
             const toggleFilterArea = (id) => {
@@ -678,22 +718,16 @@
                 <div className="min-h-screen pb-12 transition-colors duration-300">
                     <header className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 py-4 px-4 sticky top-0 z-40 transition-colors shadow-sm dark:shadow-none">
                         <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                            {/* Left (Absolute on mobile visually, structured flex on desktop) */}
                             <div className="flex-1 w-full md:w-auto relative flex items-center justify-between md:justify-start">
                                 <div className="flex items-center gap-3 md:hidden">
                                     <button onClick={() => setPomodoroOpen(true)} className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"><Timer size={18}/></button>
                                     <button onClick={() => setSettingsOpen(true)} className={`p-2 rounded-lg border ${status === 'online' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border-transparent'}`}><Settings size={18}/></button>
                                 </div>
-                                
                                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0">
                                     <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow</h1>
                                 </div>
-
-                                {/* Spacer for mobile balance if needed, hidden */}
                                 <div className="w-[88px] md:hidden"></div> 
                             </div>
-
-                            {/* Right / Bottom Row on Mobile */}
                             <div className="w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
                                 <div className="flex items-center justify-between md:justify-end gap-4 md:gap-2 bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-xl">
                                     <button onClick={() => setViewMode('list')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'list' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><List size={18}/> <span className="hidden md:inline">Lista</span></button>
@@ -702,8 +736,6 @@
                                     <button onClick={() => setViewMode('dashboard')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'dashboard' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><BarChart3 size={18}/> <span className="hidden md:inline">Análise</span></button>
                                 </div>
                             </div>
-
-                             {/* Desktop Only Utilities */}
                              <div className="hidden md:flex items-center gap-2">
                                 <button onClick={() => setPomodoroOpen(true)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition"><Timer size={20}/></button>
                                 <button onClick={() => setSettingsOpen(true)} className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition ${status === 'online' ? 'text-blue-500' : 'text-slate-500'}`}><Settings size={20}/></button>
@@ -719,13 +751,7 @@
                                 {viewMode === 'list' && (
                                     <div className="relative">
                                         <Search className="absolute left-3 top-3 text-slate-400 pointer-events-none" size={18} />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Buscar por assunto ou subárea..." 
-                                            value={searchTerm}
-                                            onChange={e => setSearchTerm(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-                                        />
+                                        <input type="text" placeholder="Buscar por assunto ou subárea..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
                                     </div>
                                 )}
 
@@ -733,41 +759,15 @@
                                     <div className="flex items-center justify-between mb-6">
                                         <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2"><Plus size={16} className="text-blue-500"/> Novo Conteúdo Teórico</h2>
                                     </div>
-                                    
                                     <form onSubmit={handleAdd}>
                                         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                            {/* Row 1: Assunto & Data */}
-                                            <div className="md:col-span-8">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Assunto</label>
-                                                <input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={title} onChange={e => setTitle(e.target.value)} />
-                                            </div>
-                                            <div className="md:col-span-4">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Data Aula</label>
-                                                <input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-12" value={date} onChange={e => setDate(e.target.value)} />
-                                            </div>
-
-                                            {/* Row 2: Link Material (NEW) */}
-                                            <div className="md:col-span-12">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Link do Material (Opcional)</label>
-                                                <input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={link} onChange={e => setLink(e.target.value)} />
-                                            </div>
-
-                                            {/* Row 3: Selects & Button - Equal Columns */}
-                                            <div className="md:col-span-3">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Área</label>
-                                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select>
-                                            </div>
-                                            <div className="md:col-span-3">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Subárea</label>
-                                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{currentSubareas.map(s => <option key={s} value={s}>{s}</option>)}</select>
-                                            </div>
-                                            <div className="md:col-span-3">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Prioridade</label>
-                                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={importance} onChange={e => setImportance(e.target.value)}>{IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}</select>
-                                            </div>
-                                            <div className="md:col-span-3 flex items-end">
-                                                <button type="submit" className="h-12 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center shadow-lg shadow-blue-600/20">Adicionar</button>
-                                            </div>
+                                            <div className="md:col-span-8"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Assunto</label><input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={title} onChange={e => setTitle(e.target.value)} /></div>
+                                            <div className="md:col-span-4"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Data Aula</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-12" value={date} onChange={e => setDate(e.target.value)} /></div>
+                                            <div className="md:col-span-12"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Link do Material (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={link} onChange={e => setLink(e.target.value)} /></div>
+                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Área</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Subárea</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{currentSubareas.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
+                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Prioridade</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={importance} onChange={e => setImportance(e.target.value)}>{IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}</select></div>
+                                            <div className="md:col-span-3 flex items-end"><button type="submit" className="h-12 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center shadow-lg shadow-blue-600/20">Adicionar</button></div>
                                         </div>
                                     </form>
                                 </section>

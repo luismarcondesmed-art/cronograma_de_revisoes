@@ -2,14 +2,14 @@
 <html lang="pt-BR" class="antialiased">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ResiFlow - Estudo Inteligente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>ReviewFlow - Estudo Inteligente</title>
     
     <!-- PWA Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- A cor inicial será definida pelo HTML, mas o React vai assumir o controle -->
+    <meta name="theme-color" content="#ffffff">
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -57,8 +57,15 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+        
+        /* Glass Effect */
         .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .dark .glass { background: rgba(9, 9, 11, 0.85); }
+
+        /* iOS Safe Area Utilities */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
+        .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 transition-colors duration-300 selection:bg-blue-500 selection:text-white">
@@ -267,9 +274,9 @@
         const ModalWrapper = ({ isOpen, onClose, children, title }) => {
             if (!isOpen) return null;
             return (
-                <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4">
+                <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh]">
+                    <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0">
                         <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3>
                             <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button>
@@ -402,7 +409,7 @@
             }, [logs]);
 
             return (
-                <div className="space-y-6 animate-fade-in pb-20">
+                <div className="space-y-6 animate-fade-in pb-32">
                      <section className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
                         <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Icons.Notebook size={14}/> Novo Registro Diário</h2>
                         <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
@@ -494,7 +501,7 @@
             };
 
             return (
-                <div className="animate-fade-in pb-20">
+                <div className="animate-fade-in pb-32">
                     <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">
@@ -643,7 +650,7 @@
             }, [topics]);
 
             return (
-                <div className="space-y-4 animate-fade-in pb-20">
+                <div className="space-y-4 animate-fade-in pb-32">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="col-span-2 md:col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden">
                             <Icons.Activity className="absolute right-4 top-4 opacity-20" size={80}/>
@@ -671,14 +678,22 @@
             const [reviewModalData, setReviewModalData] = useState(null);
             const [settingsOpen, setSettingsOpen] = useState(false);
             const [pomodoroOpen, setPomodoroOpen] = useState(false);
-            const [deleteConfirmId, setDeleteConfirmId] = useState(null); // ID for topic to delete
+            const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
             // Sync Hook
             const { status, syncKey, setSyncKey, saveToCloud } = useSync(topics, logs, setTopics, setLogs);
 
+            // Update Theme Color Dynamically for Mobile Status Bar
             useEffect(() => {
-                if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('resiflow_theme', 'dark'); } 
-                else { document.documentElement.classList.remove('dark'); localStorage.setItem('resiflow_theme', 'light'); }
+                if (darkMode) { 
+                    document.documentElement.classList.add('dark'); 
+                    localStorage.setItem('resiflow_theme', 'dark');
+                    document.querySelector("meta[name='theme-color']").setAttribute("content", "#09090b");
+                } else { 
+                    document.documentElement.classList.remove('dark'); 
+                    localStorage.setItem('resiflow_theme', 'light');
+                    document.querySelector("meta[name='theme-color']").setAttribute("content", "#ffffff");
+                }
             }, [darkMode]);
 
             useEffect(() => {
@@ -701,9 +716,7 @@
                 setTopics([newTopic, ...topics]);
             };
 
-            const triggerDelete = (id) => {
-                setDeleteConfirmId(id);
-            };
+            const triggerDelete = (id) => { setDeleteConfirmId(id); };
 
             const confirmDelete = () => {
                 if (deleteConfirmId) {
@@ -733,7 +746,7 @@
             };
 
             return (
-                <div className="min-h-screen pb-24 md:pb-10 relative overflow-x-hidden">
+                <div className="min-h-screen pb-32 md:pb-10 relative overflow-x-hidden pt-safe">
                     {/* Background */}
                     <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
                         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[100px]"></div>
@@ -741,7 +754,7 @@
                     </div>
 
                     {/* Header */}
-                    <header className="fixed top-0 w-full z-40 glass border-b border-slate-200/50 dark:border-white/5 transition-all">
+                    <header className="fixed top-0 w-full z-40 glass border-b border-slate-200/50 dark:border-white/5 transition-all pt-safe">
                         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
                             <h1 className="text-xl font-bold flex items-center gap-2 tracking-tight text-slate-800 dark:text-white">
                                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><Icons.Activity size={18}/></div> ResiFlow
@@ -756,17 +769,17 @@
 
                     {/* Main Content */}
                     <main className="max-w-3xl mx-auto px-4 mt-24">
-                        {/* Mobile Bottom Nav */}
-                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 pb-safe z-50 flex justify-around py-3 px-2">
+                        {/* Mobile Bottom Nav - Improved with Safe Area */}
+                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe mb-safe">
                             {[{id:'list',i:Icons.Home},{id:'calendar',i:Icons.Calendar},{id:'dashboard',i:Icons.PieChart},{id:'diary',i:Icons.Notebook}].map(item => (
-                                <button key={item.id} onClick={() => setView(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400'}`}>
-                                    <item.i size={22} strokeWidth={view === item.id ? 2.5 : 2}/>
+                                <button key={item.id} onClick={() => setView(item.id)} className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all active:scale-95 ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>
+                                    <item.i size={24} strokeWidth={view === item.id ? 2.5 : 2}/>
                                 </button>
                             ))}
                         </nav>
 
                         {/* FAB */}
-                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:static md:mb-6 z-[55]">
+                        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:static md:mb-6 z-[55] mb-safe">
                              <button onClick={() => setModalAddOpen(true)} className="w-14 h-14 md:w-full md:h-12 md:rounded-xl rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"><Icons.Plus size={24}/><span className="hidden md:inline font-bold">Novo Tópico</span></button>
                         </div>
 

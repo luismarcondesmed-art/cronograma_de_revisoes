@@ -41,7 +41,6 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
-    <!-- Firebase: Added Auth Module -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, onSnapshot, setDoc, collection } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -62,11 +61,26 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         
+        /* CONTROLE GLOBAL DE CORES E TEMA - CORRIGE O BUG DO FUNDO */
+        :root {
+            --bg-color: #f8fafc; /* slate-50 */
+            --text-color: #0f172a; /* slate-900 */
+        }
+        
+        html.dark {
+            --bg-color: #09090b; /* zinc-950 */
+            --text-color: #e2e8f0; /* slate-200 */
+        }
+
         html, body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
             height: 100%;
+            width: 100%;
             overscroll-behavior-y: none;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 300ms ease, color 300ms ease;
         }
         
         input, select, textarea { font-size: 16px !important; }
@@ -87,7 +101,7 @@
         .no-scrollbar { -ms-overflow-style: none;  scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 transition-colors duration-300 selection:bg-blue-500 selection:text-white">
+<body class="selection:bg-blue-500 selection:text-white">
     <div id="root" class="h-full"></div>
 
     <script type="text/babel">
@@ -147,7 +161,6 @@
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern);
         };
 
-        // BUG FIX: Get Local Date instead of UTC
         const getTodayStr = () => {
             const d = new Date();
             return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
@@ -255,13 +268,12 @@
             const stateRef = useRef({ topics, logs });
             useEffect(() => { stateRef.current = { topics, logs }; }, [topics, logs]);
 
-            // BUG FIX: Auth Logic + Sync
             useEffect(() => {
                 if (!config || !syncKey || !window.firebaseModules) return;
                 try {
                     const { initializeApp, getFirestore, doc, onSnapshot, getAuth, signInAnonymously } = window.firebaseModules;
                     let app;
-                    try { app = initializeApp(config); } catch(e) { app = window.firebaseModules.app; } // Handle existing app
+                    try { app = initializeApp(config); } catch(e) { app = window.firebaseModules.app; }
                     
                     const auth = getAuth();
                     signInAnonymously(auth).then(() => {
@@ -308,7 +320,7 @@
                 <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
                     <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0">
-                        <div className="p-4 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10">
+                        <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10">
                             <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3>
                             <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button>
                         </div>
@@ -318,7 +330,6 @@
             );
         };
 
-        // 1. Settings Modal
         const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
             const [tempKey, setTempKey] = useState(syncKey);
             useEffect(() => setTempKey(syncKey), [syncKey]);
@@ -336,12 +347,14 @@
                 reader.onload = (event) => {
                     try {
                         const data = JSON.parse(event.target.result);
-                        if (data.topics) setTopics(prev => mergeItems(prev, data.topics));
-                        if (data.logs) setLogs(prev => mergeItems(prev, data.logs));
-                        alert('Dados importados!'); onClose();
-                    } catch (err) { alert('Erro ao ler arquivo.'); }
+                        if (!Array.isArray(data.topics) && !Array.isArray(data.logs)) { throw new Error("Formato inválido"); }
+                        if (data.topics && Array.isArray(data.topics)) setTopics(prev => mergeItems(Array.isArray(prev) ? prev : [], data.topics));
+                        if (data.logs && Array.isArray(data.logs)) setLogs(prev => mergeItems(Array.isArray(prev) ? prev : [], data.logs));
+                        alert('Backup importado com sucesso!'); onClose();
+                    } catch (err) { console.error(err); alert('Erro ao importar: Arquivo inválido ou corrompido.'); }
                 };
                 reader.readAsText(file);
+                e.target.value = null;
             };
             return (
                 <ModalWrapper isOpen={isOpen} onClose={onClose} title="Configurações">
@@ -643,7 +656,7 @@
                 } else {
                     document.documentElement.classList.remove('dark');
                     localStorage.setItem('resiflow_theme', 'light');
-                    if(metaThemeColor) metaThemeColor.setAttribute("content", "#ffffff");
+                    if(metaThemeColor) metaThemeColor.setAttribute("content", "#f8fafc");
                     if(metaStatusBarStyle) metaStatusBarStyle.setAttribute("content", "default");
                 }
             }, [darkMode]);

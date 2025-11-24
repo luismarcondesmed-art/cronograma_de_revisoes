@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="antialiased h-full">
+<html lang="pt-BR" class="antialiased">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -8,12 +8,24 @@
     <!-- PWA & iOS Configurações Otimizadas -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="ResiFlow">
-    <!-- black-translucent permite que o fundo do app defina a cor da barra de status -->
+    <!-- black-translucent: O conteúdo flui por baixo da barra de status -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Theme Color Dinâmico (Evita flash branco no boot) -->
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc">
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">
+    <!-- Cores do tema para o navegador (Chrome/Safari) -->
+<!-- Theme Color FORÇADO para iOS 18+ (corrige bordas brancas) -->
+<meta name="theme-color" content="#09090b">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">
+
+<!-- Força o fundo preto nas bordas do iOS mesmo em overscroll -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+    @supports (-webkit-touch-callout: none) {
+        body { background-color: #09090b !important; }
+        html.dark body { background-color: #09090b !important; }
+    }
+</style>
+
     
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
@@ -58,8 +70,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // Mock registro SW para evitar erros no console se não existir arquivo
-                // navigator.serviceWorker.register('./sw.js').catch(() => {});
+                // Mock registro SW
             });
         }
     </script>
@@ -77,22 +88,30 @@
             --text-color: #e2e8f0;
         }
 
-        /* Correção Crítica para iOS: Aplicar cor ao HTML evita fundo branco no overscroll */
+        /* CRÍTICO PARA IOS: Forçar a cor de fundo no HTML e usar min-height 100dvh */
         html { 
             background-color: var(--bg-color);
             transition: background-color 300ms ease;
+            min-height: 100dvh; /* Dynamic viewport height */
+            -webkit-text-size-adjust: 100%;
+        }
+
+        /* Fallback de CSS puro para garantir Dark Mode nativo sem flash branco */
+        @media (prefers-color-scheme: dark) {
+            html:not(.light) {
+                background-color: #09090b;
+                color: #e2e8f0;
+            }
         }
 
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; 
             -webkit-tap-highlight-color: transparent; 
-            height: 100%;
+            min-height: 100dvh;
             width: 100%;
-            /* Overscroll behavior ajuda, mas a cor no html é mais importante */
             overscroll-behavior-y: none;
-            background-color: var(--bg-color);
+            background-color: transparent; /* O corpo é transparente para mostrar a cor do HTML */
             color: var(--text-color);
-            transition: background-color 300ms ease, color 300ms ease;
         }
         
         input, select, textarea { font-size: 16px !important; }
@@ -102,7 +121,6 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
         
-        /* Ajuste do Glassmorphism para ser mais legível */
         .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
         .dark .glass { background: rgba(9, 9, 11, 0.85); border-bottom: 1px solid rgba(255,255,255,0.05); }
 
@@ -723,11 +741,11 @@
 
             return (
                 <div className="min-h-screen pb-32 md:pb-10 relative overflow-x-hidden pt-safe">
-                    {/* Correção de Bug 3: Fundo Decorativo Refinado */}
-                    <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
-                         {/* Bolhas Centralizadas, Maiores e com Mix Blend Mode para suavidade */}
-                         <div className="absolute top-0 left-0 -translate-x-1/2 -translate-y-1/2 w-[100vh] h-[100vh] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-screen opacity-70 dark:opacity-30"></div>
-                         <div className="absolute bottom-0 right-0 translate-x-1/2 translate-y-1/2 w-[100vh] h-[100vh] bg-purple-400/10 dark:bg-purple-600/10 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-screen opacity-70 dark:opacity-30"></div>
+                    {/* Correção de Bug 3 & Desktop Clipping: Fixed inset-0 garante que o fundo sempre cubra a janela inteira */}
+                    <div className="fixed inset-0 w-full h-full overflow-hidden -z-10 pointer-events-none bg-slate-50 dark:bg-zinc-950 transition-colors duration-300">
+                         {/* Bolhas Aumentadas e Mais Sutis no Dark Mode */}
+                         <div className="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen opacity-70 dark:opacity-15"></div>
+                         <div className="absolute bottom-0 right-0 translate-x-1/4 translate-y-1/4 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-purple-400/10 dark:bg-indigo-900/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-screen opacity-70 dark:opacity-15"></div>
                     </div>
 
                     <header className="fixed top-0 w-full z-40 glass border-b border-slate-200/50 dark:border-white/5 transition-all pt-safe">

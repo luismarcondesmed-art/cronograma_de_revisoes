@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" class="antialiased">
+<html lang="pt-BR" class="antialiased h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -8,18 +8,19 @@
     <!-- PWA Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="ResiFlow">
+    
+    <!-- Status Bar Style: Default inicial -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Theme Color: Única tag, controlada pelo React -->
+    <meta name="theme-color" content="#ffffff">
     
     <!-- Link para o Manifesto Externo -->
     <link rel="manifest" href="manifest.json">
     
     <!-- Ícones -->
     <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="apple-touch-icon" href="icon.svg"> <!-- O iOS aceita SVG em versões recentes, mas prefere PNG -->
-    
-    <!-- Cores de Tema para Mobile (Crucial para a barra de status) -->
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
+    <link rel="apple-touch-icon" href="icon.svg">
     
     <!-- Bibliotecas Externas -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -69,7 +70,13 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        html, body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            -webkit-tap-highlight-color: transparent; 
+            height: 100%; /* Garante altura total para o fundo */
+        }
+        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
@@ -85,7 +92,7 @@
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 transition-colors duration-300 selection:bg-blue-500 selection:text-white">
-    <div id="root"></div>
+    <div id="root" class="h-full"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
@@ -701,14 +708,19 @@
 
             // Update Theme Color Dynamically for Mobile Status Bar
             useEffect(() => {
-                if (darkMode) { 
-                    document.documentElement.classList.add('dark'); 
+                const metaThemeColor = document.querySelector("meta[name='theme-color']");
+                const metaStatusBarStyle = document.querySelector("meta[name='apple-mobile-web-app-status-bar-style']");
+                
+                if (darkMode) {
+                    document.documentElement.classList.add('dark');
                     localStorage.setItem('resiflow_theme', 'dark');
-                    document.querySelector("meta[name='theme-color']").setAttribute("content", "#09090b");
-                } else { 
-                    document.documentElement.classList.remove('dark'); 
+                    if(metaThemeColor) metaThemeColor.setAttribute("content", "#09090b");
+                    if(metaStatusBarStyle) metaStatusBarStyle.setAttribute("content", "black-translucent"); // Allows dark bg to show
+                } else {
+                    document.documentElement.classList.remove('dark');
                     localStorage.setItem('resiflow_theme', 'light');
-                    document.querySelector("meta[name='theme-color']").setAttribute("content", "#ffffff");
+                    if(metaThemeColor) metaThemeColor.setAttribute("content", "#ffffff");
+                    if(metaStatusBarStyle) metaStatusBarStyle.setAttribute("content", "default");
                 }
             }, [darkMode]);
 

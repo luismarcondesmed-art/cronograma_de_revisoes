@@ -1,4 +1,4 @@
-const CACHE_NAME = 'resiflow-v1';
+const CACHE_NAME = 'resiflow-v2';
 const URLS_TO_CACHE = [
   './',
   './index.html',
@@ -17,9 +17,10 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(URLS_TO_CACHE))
   );
+  self.skipWaiting(); // Força o novo SW a ativar imediatamente
 });
 
-// Ativação: Limpa caches antigos se necessário
+// Ativação: Limpa caches antigos
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -32,9 +33,10 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });
 
-// Interceptação: Cache First, Network Fallback (para libs) ou Network First (para dados)
+// Interceptação
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -43,7 +45,6 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        // Se não, busca na rede
         return fetch(event.request);
       })
   );

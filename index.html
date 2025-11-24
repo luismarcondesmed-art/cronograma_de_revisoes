@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>ReviewFlow - Estudo Inteligente</title>
+    <title>ResiFlow</title>
     
-    <!-- PWA Setup -->
+    <!-- PWA Setup Fundamental -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ResiFlow">
+    
+    <!-- Correção Barra de Status iOS: Define a cor baseada no tema do sistema ANTES do JS rodar -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <!-- A cor inicial será definida pelo HTML, mas o React vai assumir o controle -->
-    <meta name="theme-color" content="#ffffff">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -50,6 +53,54 @@
         window.firebaseModules = { initializeApp, getFirestore, doc, onSnapshot, setDoc, collection };
     </script>
 
+    <!-- PWA Generation Script (Icons & Manifest) -->
+    <script>
+        (function() {
+            // 1. Gerar Ícone SVG (Gradiente Azul/Roxo com Pulso)
+            const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#2563eb"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient></defs><rect width="512" height="512" rx="128" fill="url(#g)"/><path d="M96 256h64l48-96 64 192 64-192 48 96h32" stroke="white" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
+            const iconUrl = "data:image/svg+xml;base64," + btoa(iconSvg);
+
+            // 2. Injetar Links de Ícone
+            const linkFavicon = document.createElement('link');
+            linkFavicon.rel = 'icon';
+            linkFavicon.href = iconUrl;
+            document.head.appendChild(linkFavicon);
+
+            const linkApple = document.createElement('link');
+            linkApple.rel = 'apple-touch-icon';
+            linkApple.href = iconUrl;
+            document.head.appendChild(linkApple);
+
+            // 3. Gerar Manifest.json Dinâmico
+            const manifest = {
+                name: "ResiFlow",
+                short_name: "ResiFlow",
+                start_url: ".",
+                display: "standalone",
+                background_color: "#09090b",
+                theme_color: "#09090b",
+                icons: [
+                    { src: iconUrl, sizes: "512x512", type: "image/svg+xml" },
+                    { src: iconUrl, sizes: "192x192", type: "image/svg+xml" }
+                ]
+            };
+            const manifestUrl = "data:application/json;base64," + btoa(JSON.stringify(manifest));
+            const linkManifest = document.createElement('link');
+            linkManifest.rel = 'manifest';
+            linkManifest.href = manifestUrl;
+            document.head.appendChild(linkManifest);
+
+            // 4. Registrar Service Worker (Necessário para PWA Install Banner no Chrome)
+            if ('serviceWorker' in navigator) {
+                // Service Worker vazio apenas para cumprir o requisito de PWA
+                const swContent = `self.addEventListener('fetch', () => {});`;
+                const swBlob = new Blob([swContent], {type: 'text/javascript'});
+                const swUrl = URL.createObjectURL(swBlob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+        })();
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -58,11 +109,10 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
         
-        /* Glass Effect */
         .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .dark .glass { background: rgba(9, 9, 11, 0.85); }
 
-        /* iOS Safe Area Utilities */
+        /* Safe Area Utilities */
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         .pt-safe { padding-top: env(safe-area-inset-top); }
         .mb-safe { margin-bottom: env(safe-area-inset-bottom); }
@@ -74,13 +124,13 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- ICON ADAPTER ---
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
             return React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className }, iconData.map((ele, i) => React.createElement(ele[0], { ...ele[1], key: i })));
         };
 
+        // Icons Mapping
         const Icons = {
             Target: (p) => <LucideIcon name="Target" {...p} />,
             Calendar: (p) => <LucideIcon name="Calendar" {...p} />,

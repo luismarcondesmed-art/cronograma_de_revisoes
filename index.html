@@ -563,6 +563,7 @@
                                     getReviewsForDate(selectedDate).map((item, i) => {
                                         const areaInfo = AREAS.find(a => a.id === item.topic.area) || AREAS[0];
                                         const accuracy = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0;
+                                        const targetQ = item.review.targetQ || 0;
                                         
                                         return (
                                             <div key={i} className={`p-4 rounded-xl border relative overflow-hidden ${item.review.done ? 'bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80' : 'bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-700 shadow-sm'}`}>
@@ -580,7 +581,7 @@
                                                         <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div>
                                                         <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                                             <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span>
-                                                            <span>{item.review.label.split(':')[1]}</span>
+                                                            <span>{item.review.label.split(':')[1]} • {targetQ > 0 ? `${targetQ}q` : 'Revisão'}</span>
                                                         </div>
                                                     </div>
 
@@ -651,6 +652,16 @@
             const nextReview = topic.reviews.find(r => !r.done);
             const isLate = nextReview && nextReview.date < getTodayStr();
 
+            // Mapeamento de cores para elementos internos
+            const colorMap = {
+                clinica: 'blue',
+                cirurgia: 'red',
+                pediatria: 'amber',
+                go: 'purple',
+                preventiva: 'emerald'
+            };
+            const c = colorMap[topic.area] || 'blue';
+
             return (
                 <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-white/5`}>
                     <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
@@ -661,17 +672,17 @@
                                     {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>}
                                     {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>}
                                 </div>
-                                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{topic.title}</h3>
+                                <h3 className={`font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-${c}-600 dark:group-hover:text-${c}-400 transition-colors`}>{topic.title}</h3>
                             </div>
                             <div className="flex flex-col items-end gap-1.5">
                                 {completedCount > 0 && ( <span className={`text-xs font-black px-2 py-0.5 rounded-full ${avgAccuracy >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>{avgAccuracy}%</span> )}
-                                <div className="flex gap-1">{[0,1,2,3].map(i => { const rev = topic.reviews[i]; let color = 'bg-slate-200 dark:bg-zinc-800'; if (rev && rev.done) color = (rev.correct/rev.total) >= 0.8 ? 'bg-emerald-500' : 'bg-amber-500'; else if (rev && !rev.done && (i === 0 || topic.reviews[i-1].done)) color = 'bg-blue-500 animate-pulse'; return <div key={i} className={`w-1.5 h-1.5 rounded-full ${color}`}></div> })}</div>
+                                <div className="flex gap-1">{[0,1,2,3].map(i => { const rev = topic.reviews[i]; let color = 'bg-slate-200 dark:bg-zinc-800'; if (rev && rev.done) color = (rev.correct/rev.total) >= 0.8 ? 'bg-emerald-500' : 'bg-amber-500'; else if (rev && !rev.done && (i === 0 || topic.reviews[i-1].done)) color = `bg-${c}-500 animate-pulse`; return <div key={i} className={`w-1.5 h-1.5 rounded-full ${color}`}></div> })}</div>
                             </div>
                         </div>
                     </div>
                     {expanded && (
                         <div className="px-4 pb-4 pt-0 bg-slate-50/50 dark:bg-zinc-950/30 border-t border-slate-100 dark:border-zinc-800 animate-fade-in">
-                            <div className="space-y-2 mt-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const isLateItem = !isDone && rev.date < getTodayStr(); return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? 'bg-white dark:bg-zinc-800 shadow-sm border border-blue-100 dark:border-blue-900/30' : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? 'text-blue-600 dark:text-blue-400' : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${isLateItem ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)} {isLateItem && '(Atrasado)'}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(5);}} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-blue-500/20 active:scale-95 transition-transform">Revisar</button> ) : (<Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/>)} </div> ) })}</div>
+                            <div className="space-y-2 mt-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const isLateItem = !isDone && rev.date < getTodayStr(); return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? `bg-white dark:bg-zinc-800 shadow-sm border border-${c}-100 dark:border-${c}-900/30` : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? `text-${c}-600 dark:text-${c}-400` : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${isLateItem ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)} {isLateItem && '(Atrasado)'}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(5);}} className={`bg-${c}-600 hover:bg-${c}-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-${c}-500/20 active:scale-95 transition-transform`}>Revisar</button> ) : (<Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/>)} </div> ) })}</div>
                             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center">{topic.materialLink ? ( <a href={topic.materialLink} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><Icons.LinkIcon size={12}/> Material</a> ) : <div></div>} <button onClick={(e) => { e.stopPropagation(); onDelete(topic.id); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Icons.Trash2 size={12}/> Excluir</button></div>
                         </div>
                     )}

@@ -77,7 +77,6 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
 
-        // --- ICON ADAPTER ---
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
@@ -149,9 +148,10 @@
             { id: 'preventiva', name: 'Preventiva', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', subareas: ['SUS', 'Epidemiologia', 'Saúde do Trabalhador', 'Ética Médica', 'Bioestatística'] },
         ];
 
+        // R0 Base: 20(Baixa) - 25(Média) - 30(Alta)
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
-            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
+            { id: 'high', label: 'Alta', weight: 1.0, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
+            { id: 'medium', label: 'Média', weight: 1.0, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
             { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400', baseQ: 20 },
         ];
 
@@ -177,60 +177,66 @@
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
 
+        // PARÂMETROS OTIMIZADOS
         const SYSTEM_PARAMS = { 
             MIN_QUESTIONS: 15, 
             MAX_QUESTIONS: 100,
-            TARGET_ACCURACY: 0.80 
+            TARGET_ACCURACY: 0.85,
+            SPACING_FACTORS: {
+                'R0': 1.0, // Base
+                'R1': 2.0, // Pico (Dobra R0)
+                'R2': 1.2, // Manutenção (20% acima da base original)
+                'R3': 0.8, // Longo Prazo (80% da base original)
+                'DEFAULT': 1.0
+            }
         };
 
-        // --- CÁLCULO HÍBRIDO ENCADEADO (CORRIGIDO) ---
-        const calculateNextLoad = (previousTotal, accuracy, importanceId, difficultyId, nextStageType) => {
-            // Se não há histórico (ex: criação do cronograma), usa a base de importância como 'previousTotal'
-            // Isso corrige o erro de "0" inicial.
-            let base = previousTotal;
-            if (!base || base === 0 || isNaN(base)) {
-                const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
-                base = impObj.baseQ;
-            }
+        // --- CÁLCULO ABSOLUTO BASEADO EM R0 ---
+        const calculateNextLoad = (importanceId, difficultyId, nextStageType, accuracy) => {
+            // 1. Base (R0) definida pela importância
+            const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
+            const baseR0 = impObj.baseQ; // 20, 25 ou 30
 
-            // Fatores de Multiplicação (Pico em R1, depois queda/manutenção)
-            let stageMultiplier = 1.0;
-            if (nextStageType === 'R1') stageMultiplier = 2.0; // Dobra a carga do R0
-            else if (nextStageType === 'R2') stageMultiplier = 0.6; // Cai para 60% do pico
-            else if (nextStageType === 'R3') stageMultiplier = 1.0; // Mantém
+            // 2. Fator do Estágio (Multiplica a Base R0)
+            const stageFactor = SYSTEM_PARAMS.SPACING_FACTORS[nextStageType] || 1.0;
 
-            // Fatores de Ajuste Fino
+            // 3. Fator Dificuldade (0.9, 1.0, 1.1)
             const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
-            
-            // Performance: Meta 80%. Se <80%, aumenta a carga para compensar o gap.
-            const target = SYSTEM_PARAMS.TARGET_ACCURACY;
-            const gap = Math.max(0, target - accuracy);
-            const perfMultiplier = 1 + (gap / target); // Ex: 50% acerto -> gap 0.3 -> 1.375x
+
+            // 4. Fator Performance (Gap para 80%)
+            // Só aplica se tiver accuracy (ou seja, não é projeção inicial)
+            let perfFactor = 1.0;
+            if (accuracy !== null) {
+                const target = SYSTEM_PARAMS.TARGET_ACCURACY;
+                const gap = Math.max(0, target - accuracy);
+                // Ex: Acerto 0.50 -> Gap 0.30 -> Fator = 1 + (0.30 * 2) = 1.6x
+                perfFactor = 1 + (gap * 2.0);
+                if (perfFactor > 1.5) perfFactor = 1.5; // Cap de performance
+            }
 
             // Cálculo Final
-            let nextQ = Math.ceil(base * stageMultiplier * diffWeight * perfMultiplier);
+            let n = Math.round(baseR0 * stageFactor * diffWeight * perfFactor);
 
             // Regra de Ouro (<60% = +10q)
-            if (accuracy < 0.60) {
-                nextQ += 10;
+            if (accuracy !== null && accuracy < 0.60) {
+                n += 10;
             }
 
-            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(nextQ, SYSTEM_PARAMS.MAX_QUESTIONS));
+            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
         };
 
         const generateSchedule = (studyDate, importanceId) => {
             const d0 = new Date(studyDate + 'T12:00:00');
             const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
             
-            // R0: Base Fixa da Importância (20, 25, 30)
+            // R0 Real
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
             const qR0 = impObj.baseQ;
 
-            // Projeção Encadeada (Simulando Acerto 100%, Dif Média)
-            // Passamos o resultado de um como base para o outro
-            const qR1_Proj = calculateNextLoad(qR0, 1.0, importanceId, 'medium', 'R1');
-            const qR2_Proj = calculateNextLoad(qR1_Proj, 1.0, importanceId, 'medium', 'R2');
-            const qR3_Proj = calculateNextLoad(qR2_Proj, 1.0, importanceId, 'medium', 'R3');
+            // Projeções (Assumindo 100% acerto e dificuldade média para não dar 0/NaN)
+            const qR1_Proj = calculateNextLoad(importanceId, 'medium', 'R1', null);
+            const qR2_Proj = calculateNextLoad(importanceId, 'medium', 'R2', null);
+            const qR3_Proj = calculateNextLoad(importanceId, 'medium', 'R3', null);
 
             return [
                 { type: 'R0', date: studyDate, label: 'R0: Fixação', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR0 },
@@ -677,7 +683,7 @@
 
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
             
-            // CORREÇÃO: Agora passando data.total como previousTotal
+            // FIX: Passando data.total para o calculateNextLoad e corrigindo ordem dos parâmetros
             const completeReview = (data) => { 
                 setTopics(prev => prev.map(topic => { 
                     if (topic.id !== selectedTask.topicId) return topic; 
@@ -688,8 +694,8 @@
                         const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
                         const nextReviewType = newReviews[currentIdx + 1].type; 
                         
-                        // CORREÇÃO CRÍTICA: data.total passado como primeiro argumento
-                        const nextLoad = calculateNextLoad(data.total, accuracy, topic.importance, data.difficulty, nextReviewType); 
+                        // CORREÇÃO AQUI: Ordem correta: Importância, Dificuldade, Próximo Estágio, Acurácia
+                        const nextLoad = calculateNextLoad(topic.importance, data.difficulty, nextReviewType, accuracy); 
                         
                         newReviews[currentIdx + 1].targetQ = nextLoad; 
                     } 

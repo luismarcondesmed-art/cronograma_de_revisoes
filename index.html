@@ -151,15 +151,15 @@
 
         // R0 Base: 20-30
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 2.0, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
-            { id: 'medium', label: 'Média', weight: 1.5, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
+            { id: 'high', label: 'Alta', weight: 1.5, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
+            { id: 'medium', label: 'Média', weight: 1.25, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
             { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400', baseQ: 20 },
         ];
 
         const DIFFICULTY_LEVELS = [
-            { id: 'easy', label: 'Fácil', weight: 0.85, icon: ThumbsUp },
+            { id: 'easy', label: 'Fácil', weight: 0.9, icon: ThumbsUp },
             { id: 'medium', label: 'Médio', weight: 1.0, icon: Minus },
-            { id: 'hard', label: 'Difícil', weight: 1.15, icon: ThumbsDown },
+            { id: 'hard', label: 'Difícil', weight: 1.1, icon: ThumbsDown },
         ];
 
         const LOG_TYPES = [
@@ -178,52 +178,58 @@
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
 
+        // --- PARAMETROS DO SISTEMA v7.1 ---
         const SYSTEM_PARAMS = { 
-            BASE_QUESTIONS: 15, // Base mínima para cálculo (Ajustada pelos pesos de Imp)
+            BASE_QUESTIONS: 20, 
             MIN_QUESTIONS: 15, 
             MAX_QUESTIONS: 100,
             TARGET_ACCURACY: 0.90, // 90%
             SPACING_FACTORS: {
-                'R0': 1.0, // Usada para basear o R0
-                'R1': 2.5, // Pico (Dobro da base)
+                'R0': 1.0, 
+                'R1': 2.5,  // Pico Agressivo
                 'R2': 1.25, // Manutenção
-                'R3': 1.0, // Longo Prazo
+                'R3': 1.0,  // Longo Prazo
                 'DEFAULT': 1.0
-            }
+            },
+            PERF_CAP: 2.2
         };
 
-        // --- CÁLCULO ABSOLUTO BASEADO NA IMPORTÂNCIA (CORRIGIDO) ---
-        // Não depende mais de 'previousTotal' que podia vir zerado/null
+        // --- CÁLCULO DE CARGA (ABSOLUTO E INTELIGENTE) ---
         const calculateNextLoad = (importanceId, difficultyId, nextStageType, accuracy) => {
-            // 1. Base Fixa pela Importância (20, 25, 30)
-            // Isso garante que SEMPRE teremos um número sólido para começar
+            // 1. Base Fixa pela Importância
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
             const base = impObj.baseQ; 
 
             // 2. Fator de Estágio
             const stageFactor = SYSTEM_PARAMS.SPACING_FACTORS[nextStageType] || SYSTEM_PARAMS.SPACING_FACTORS['DEFAULT'];
 
-            // 3. Fator de Dificuldade
+            // 3. Fator de Dificuldade (10% variação)
             const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
 
-            // 4. Fator de Performance
+            // 4. Fator de Performance com Zona de Tolerância
             let perfFactor = 1.0;
             if (accuracy !== null) {
-                const target = SYSTEM_PARAMS.TARGET_ACCURACY;
-                const gap = Math.max(0, target - accuracy);
-                // Ex: Se acertou 0.50 (gap 0.30), aumenta carga em 1 + (0.3 * 2) = 1.6x
-                perfFactor = 1 + (gap * 2.0);
-                if (perfFactor > 1.5) perfFactor = 1.5; // Cap de 1.5x
+                if (accuracy >= 1.0) {
+                    perfFactor = 0.9; // Bônus de Maestria: reduz 10%
+                } else if (accuracy >= 0.85) {
+                    perfFactor = 1.0; // Zona de Tolerância: mantém
+                } else {
+                    // Abaixo da tolerância: aumenta proporcional
+                    const target = SYSTEM_PARAMS.TARGET_ACCURACY;
+                    const gap = Math.max(0, target - accuracy);
+                    perfFactor = Math.min(SYSTEM_PARAMS.PERF_CAP, 1 + (gap * 2.0));
+                }
             }
 
-            // Cálculo
+            // 5. Cálculo Final
             let n = Math.round(base * stageFactor * diffWeight * perfFactor);
 
-            // 5. Regra de Ouro (+10 questões se < 60%)
+            // 6. Regra de Ouro (<60% = +10q)
             if (accuracy !== null && accuracy < 0.60) {
                 n += 10;
             }
 
+            // 7. Limites
             return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
         };
 
@@ -231,11 +237,11 @@
             const d0 = new Date(studyDate + 'T12:00:00');
             const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
             
-            // R0 Base (20, 25, 30)
+            // R0 inicial
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
             const qR0 = impObj.baseQ;
 
-            // Projeções Iniciais (Accuracy = null, Diff = 'medium')
+            // Projeções Iniciais (Accuracy=null, Diff='medium' -> Padrão)
             const qR1_Proj = calculateNextLoad(importanceId, 'medium', 'R1', null);
             const qR2_Proj = calculateNextLoad(importanceId, 'medium', 'R2', null);
             const qR3_Proj = calculateNextLoad(importanceId, 'medium', 'R3', null);
@@ -571,6 +577,7 @@
             )
         }
 
+        // --- RESTORED AND IMPROVED: CalendarView ---
         const CalendarView = ({ topics, onOpenReview }) => {
             const today = new Date();
             const currentMonth = today.getMonth();
@@ -581,7 +588,26 @@
             const days = [];
             for (let i = 0; i < startDay; i++) days.push(null);
             for (let i = 1; i <= daysInMonth; i++) days.push(i);
-            const getReviewsForDate = (dateStr) => { const list = []; topics.forEach(topic => { if(topic.deleted) return; topic.reviews.forEach((review, idx) => { if (review.date === dateStr) { list.push({ topicTitle: topic.title, area: topic.area, topicId: topic.id, reviewIdx: idx, importance: topic.importance, ...review }); } }); }); return list; };
+            
+            const getReviewsForDate = (dateStr) => { 
+                const list = []; 
+                topics.forEach(topic => { 
+                    if(topic.deleted) return; 
+                    topic.reviews.forEach((review, idx) => { 
+                        if (review.date === dateStr) { 
+                            list.push({ 
+                                topicTitle: topic.title, 
+                                area: topic.area, 
+                                topicId: topic.id, 
+                                reviewIdx: idx, 
+                                importance: topic.importance, 
+                                ...review 
+                            }); 
+                        } 
+                    }); 
+                }); 
+                return list; 
+            };
             return (
                 <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-4">
                     <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 capitalize">{today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
@@ -667,21 +693,20 @@
 
             const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
             
+            // NOVO CALL FIXO: Ignora 'data.total' (previousTotal) e usa cálculo absoluto baseado na importância
             const completeReview = (data) => { 
                 setTopics(prev => prev.map(topic => { 
                     if (topic.id !== selectedTask.topicId) return topic; 
                     const newReviews = [...topic.reviews]; 
                     const currentIdx = selectedTask.reviewIdx; 
                     newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; 
-                    
                     if (currentIdx + 1 < newReviews.length) { 
                         const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
                         const nextReviewType = newReviews[currentIdx + 1].type; 
-                        
-                        // AQUI A CORREÇÃO: Use "topic.importance" e ignore "data.total" (pois agora usamos BASE FIXA)
-                        // Não passamos mais o "previousTotal" pois o cálculo é absoluto a partir da BASE
+                        // IMPORTANTE: AQUI A CORREÇÃO FINAL.
+                        // A função agora espera: (importanceId, difficultyId, nextStageType, accuracy)
+                        // Removemos 'data.total' da chamada.
                         const nextLoad = calculateNextLoad(topic.importance, data.difficulty, nextReviewType, accuracy); 
-                        
                         newReviews[currentIdx + 1].targetQ = nextLoad; 
                     } 
                     return { ...topic, reviews: newReviews, updatedAt: Date.now() }; 

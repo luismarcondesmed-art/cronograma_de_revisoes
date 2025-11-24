@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ResiFlow - Sincronizado</title>
+    <title>ResiFlow - Estudo Inteligente</title>
     
     <!-- PWA Setup -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ResiFlow">
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#09090b" media="(prefers-color-scheme: dark)">
     
     <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -25,6 +26,14 @@
                     colors: {
                         slate: { 850: '#1e293b', 950: '#020617' },
                         zinc: { 850: '#27272a', 900: '#18181b', 950: '#09090b' }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
                     }
                 }
             }
@@ -42,36 +51,17 @@
     </script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 8px; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .dark ::-webkit-scrollbar-thumb { background: #475569; }
-        input[type="date"] { display: block; -webkit-appearance: none; appearance: none; line-height: 1.5; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
+        .glass { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .dark .glass { background: rgba(9, 9, 11, 0.85); }
     </style>
-
-    <!-- PWA Manifest & Icons -->
-    <script>
-        const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#ffffff" rx="128"/><path d="M469.3 256h-85.3l-64-192-128 384-64-192H42.7" stroke="#10b981" stroke-width="42" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>`;
-        const iconUrl = "data:image/svg+xml;base64," + btoa(iconSvg);
-        const linkIcon = document.createElement('link'); linkIcon.rel = 'icon'; linkIcon.href = iconUrl; document.head.appendChild(linkIcon);
-        const linkApple = document.createElement('link'); linkApple.rel = 'apple-touch-icon'; linkApple.href = iconUrl; document.head.appendChild(linkApple);
-        const manifest = { name: "ResiFlow", short_name: "ResiFlow", start_url: ".", display: "standalone", background_color: "#ffffff", theme_color: "#09090b", icons: [{ src: iconUrl, sizes: "512x512", type: "image/svg+xml" }] };
-        const linkManifest = document.createElement('link'); linkManifest.rel = 'manifest'; linkManifest.href = 'data:application/json;base64,' + btoa(JSON.stringify(manifest)); document.head.appendChild(linkManifest);
-        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
-            try {
-                const swContent = `self.addEventListener('fetch', e => { return; });`;
-                const blob = new Blob([swContent], {type: 'text/javascript'});
-                const swUrl = URL.createObjectURL(blob);
-                navigator.serviceWorker.register(swUrl).catch(e => {});
-            } catch (e) {}
-        }
-    </script>
 </head>
-<body class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 transition-colors duration-300">
+<body class="bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-slate-200 transition-colors duration-300 selection:bg-blue-500 selection:text-white">
     <div id="root"></div>
 
     <script type="text/babel">
@@ -84,53 +74,49 @@
             return React.createElement('svg', { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className }, iconData.map((ele, i) => React.createElement(ele[0], { ...ele[1], key: i })));
         };
 
-        // Icons
-        const Target = (p) => <LucideIcon name="Target" {...p} />;
-        const CalendarIcon = (p) => <LucideIcon name="Calendar" {...p} />;
-        const Plus = (p) => <LucideIcon name="Plus" {...p} />;
-        const CheckCircle2 = (p) => <LucideIcon name="CheckCircle2" {...p} />;
-        const Clock = (p) => <LucideIcon name="Clock" {...p} />;
-        const BookOpen = (p) => <LucideIcon name="BookOpen" {...p} />;
-        const Star = (p) => <LucideIcon name="Star" {...p} />;
-        const TrendingUp = (p) => <LucideIcon name="TrendingUp" {...p} />;
-        const X = (p) => <LucideIcon name="X" {...p} />;
-        const ChevronDown = (p) => <LucideIcon name="ChevronDown" {...p} />;
-        const ChevronUp = (p) => <LucideIcon name="ChevronUp" {...p} />;
-        const Activity = (p) => <LucideIcon name="Activity" {...p} />;
-        const ThumbsUp = (p) => <LucideIcon name="ThumbsUp" {...p} />;
-        const ThumbsDown = (p) => <LucideIcon name="ThumbsDown" {...p} />;
-        const Minus = (p) => <LucideIcon name="Minus" {...p} />;
-        const Moon = (p) => <LucideIcon name="Moon" {...p} />;
-        const Sun = (p) => <LucideIcon name="Sun" {...p} />;
-        const Filter = (p) => <LucideIcon name="Filter" {...p} />;
-        const LayoutGrid = (p) => <LucideIcon name="LayoutGrid" {...p} />;
-        const List = (p) => <LucideIcon name="List" {...p} />;
-        const Trash2 = (p) => <LucideIcon name="Trash2" {...p} />;
-        const Check = (p) => <LucideIcon name="Check" {...p} />;
-        const Cloud = (p) => <LucideIcon name="Cloud" {...p} />;
-        const CloudOff = (p) => <LucideIcon name="CloudOff" {...p} />;
-        const Save = (p) => <LucideIcon name="Save" {...p} />;
-        const Download = (p) => <LucideIcon name="Download" {...p} />;
-        const Settings = (p) => <LucideIcon name="Settings" {...p} />;
-        const Timer = (p) => <LucideIcon name="Timer" {...p} />;
-        const Play = (p) => <LucideIcon name="Play" {...p} />;
-        const Pause = (p) => <LucideIcon name="Pause" {...p} />;
-        const RotateCcw = (p) => <LucideIcon name="RotateCcw" {...p} />;
-        const PenTool = (p) => <LucideIcon name="PenTool" {...p} />;
-        const Layers = (p) => <LucideIcon name="Layers" {...p} />;
-        const MonitorPlay = (p) => <LucideIcon name="MonitorPlay" {...p} />;
-        const Notebook = (p) => <LucideIcon name="Notebook" {...p} />;
-        const AlertCircle = (p) => <LucideIcon name="AlertCircle" {...p} />;
-        const Tag = (p) => <LucideIcon name="Tag" {...p} />;
-        const Search = (p) => <LucideIcon name="Search" {...p} />;
-        const BarChart3 = (p) => <LucideIcon name="BarChart3" {...p} />;
-        const ChevronRight = (p) => <LucideIcon name="ChevronRight" {...p} />;
-        const Info = (p) => <LucideIcon name="Info" {...p} />;
-        const LinkIcon = (p) => <LucideIcon name="Link" {...p} />;
-        const Upload = (p) => <LucideIcon name="Upload" {...p} />;
-        const FileJson = (p) => <LucideIcon name="FileJson" {...p} />;
+        const Icons = {
+            Target: (p) => <LucideIcon name="Target" {...p} />,
+            Calendar: (p) => <LucideIcon name="Calendar" {...p} />,
+            Plus: (p) => <LucideIcon name="Plus" {...p} />,
+            CheckCircle2: (p) => <LucideIcon name="CheckCircle2" {...p} />,
+            Clock: (p) => <LucideIcon name="Clock" {...p} />,
+            BookOpen: (p) => <LucideIcon name="BookOpen" {...p} />,
+            Star: (p) => <LucideIcon name="Star" {...p} />,
+            X: (p) => <LucideIcon name="X" {...p} />,
+            ChevronDown: (p) => <LucideIcon name="ChevronDown" {...p} />,
+            ChevronUp: (p) => <LucideIcon name="ChevronUp" {...p} />,
+            ChevronLeft: (p) => <LucideIcon name="ChevronLeft" {...p} />,
+            ChevronRight: (p) => <LucideIcon name="ChevronRight" {...p} />,
+            Activity: (p) => <LucideIcon name="Activity" {...p} />,
+            Moon: (p) => <LucideIcon name="Moon" {...p} />,
+            Sun: (p) => <LucideIcon name="Sun" {...p} />,
+            List: (p) => <LucideIcon name="List" {...p} />,
+            Trash2: (p) => <LucideIcon name="Trash2" {...p} />,
+            Cloud: (p) => <LucideIcon name="Cloud" {...p} />,
+            Save: (p) => <LucideIcon name="Save" {...p} />,
+            Download: (p) => <LucideIcon name="Download" {...p} />,
+            Upload: (p) => <LucideIcon name="Upload" {...p} />,
+            Settings: (p) => <LucideIcon name="Settings" {...p} />,
+            Timer: (p) => <LucideIcon name="Timer" {...p} />,
+            Play: (p) => <LucideIcon name="Play" {...p} />,
+            Pause: (p) => <LucideIcon name="Pause" {...p} />,
+            RotateCcw: (p) => <LucideIcon name="RotateCcw" {...p} />,
+            Layers: (p) => <LucideIcon name="Layers" {...p} />,
+            Notebook: (p) => <LucideIcon name="Notebook" {...p} />,
+            Search: (p) => <LucideIcon name="Search" {...p} />,
+            BarChart3: (p) => <LucideIcon name="BarChart3" {...p} />,
+            LinkIcon: (p) => <LucideIcon name="Link" {...p} />,
+            FileJson: (p) => <LucideIcon name="FileJson" {...p} />,
+            Lock: (p) => <LucideIcon name="Lock" {...p} />,
+            Home: (p) => <LucideIcon name="Home" {...p} />,
+            PieChart: (p) => <LucideIcon name="PieChart" {...p} />,
+            MoreHorizontal: (p) => <LucideIcon name="MoreHorizontal" {...p} />,
+            PenTool: (p) => <LucideIcon name="PenTool" {...p} />,
+            MonitorPlay: (p) => <LucideIcon name="MonitorPlay" {...p} />,
+            AlertTriangle: (p) => <LucideIcon name="AlertTriangle" {...p} />,
+        };
 
-        // --- CONFIG ---
+        // --- CONFIG & CONSTANTS ---
         const USER_FIREBASE_CONFIG = {
             apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s",
             authDomain: "med-heklp.firebaseapp.com",
@@ -142,119 +128,76 @@
         };
 
         const AREAS = [
-            { id: 'clinica', name: 'Clínica Médica', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800', subareas: ['Cardiologia', 'Nefrologia', 'Pneumologia', 'Gastroenterologia', 'Hepatologia', 'Infectologia', 'Reumatologia', 'Hematologia', 'Endocrinologia', 'Neurologia', 'Psiquiatria', 'Dermatologia'] },
-            { id: 'cirurgia', name: 'Cirurgia', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-200 dark:border-red-800', subareas: ['Cirurgia Geral', 'Trauma', 'Cirurgia Digestiva', 'Cirurgia Vascular', 'Urologia', 'Ortopedia', 'Otorrinolaringologia', 'Oftalmologia', 'Cirurgia Plástica', 'Anestesiologia'] },
-            { id: 'pediatria', name: 'Pediatria', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800', subareas: ['Puericultura', 'Neonatologia', 'Infecto Ped', 'Respiratório', 'Gastro Ped', 'Nefro Ped', 'Emergências Pediátricas'] },
-            { id: 'go', name: 'G.O.', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-800', subareas: ['Obstetrícia Fisiológica', 'Obstetrícia Patológica', 'Ginecologia Geral', 'Endocrino Ginecológica', 'Oncologia Ginecológica', 'Mastologia'] },
-            { id: 'preventiva', name: 'Preventiva', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800', subareas: ['SUS', 'Epidemiologia', 'Saúde do Trabalhador', 'Ética Médica', 'Bioestatística'] },
+            { id: 'clinica', name: 'Clínica', full: 'Clínica Médica', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30', accent: 'border-blue-500 shadow-blue-500/10' },
+            { id: 'cirurgia', name: 'Cirurgia', full: 'Cirurgia Geral', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border-red-200 dark:border-red-500/30', accent: 'border-red-500 shadow-red-500/10' },
+            { id: 'pediatria', name: 'Pediatria', full: 'Pediatria', color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border-amber-200 dark:border-amber-500/30', accent: 'border-amber-500 shadow-amber-500/10' },
+            { id: 'go', name: 'G.O.', full: 'Ginecologia', color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/30', accent: 'border-purple-500 shadow-purple-500/10' },
+            { id: 'preventiva', name: 'Prev.', full: 'Preventiva', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30', accent: 'border-emerald-500 shadow-emerald-500/10' },
         ];
+        
+        const SUB_AREAS = {
+            'clinica': ['Cardiologia', 'Nefrologia', 'Pneumologia', 'Gastroenterologia', 'Hepatologia', 'Infectologia', 'Reumatologia', 'Hematologia', 'Endocrinologia', 'Neurologia', 'Psiquiatria', 'Dermatologia'],
+            'cirurgia': ['Cirurgia Geral', 'Trauma', 'Cirurgia Digestiva', 'Cirurgia Vascular', 'Urologia', 'Ortopedia', 'Otorrinolaringologia', 'Oftalmologia'],
+            'pediatria': ['Puericultura', 'Neonatologia', 'Infecto Ped', 'Respiratório', 'Gastro Ped', 'Nefro Ped', 'Emergências'],
+            'go': ['Obstetrícia', 'Ginecologia Geral', 'Endocrino Ginecológica', 'Oncologia Ginecológica', 'Mastologia'],
+            'preventiva': ['SUS', 'Epidemiologia', 'Saúde do Trabalhador', 'Ética Médica']
+        };
 
-        // R0 Base: 20-30
         const IMPORTANCE_LEVELS = [
-            { id: 'high', label: 'Alta', weight: 1.5, color: 'text-red-600 dark:text-red-400', baseQ: 30 },
-            { id: 'medium', label: 'Média', weight: 1.25, color: 'text-yellow-600 dark:text-yellow-400', baseQ: 25 },
-            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400', baseQ: 20 },
-        ];
-
-        const DIFFICULTY_LEVELS = [
-            { id: 'easy', label: 'Fácil', weight: 0.9, icon: ThumbsUp },
-            { id: 'medium', label: 'Médio', weight: 1.0, icon: Minus },
-            { id: 'hard', label: 'Difícil', weight: 1.1, icon: ThumbsDown },
+            { id: 'high', label: 'Alta', weight: 1.5, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', baseQ: 30 },
+            { id: 'medium', label: 'Média', weight: 1.25, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-900/20', baseQ: 25 },
+            { id: 'low', label: 'Baixa', weight: 1.0, color: 'text-slate-500 dark:text-slate-400', bg: 'bg-slate-100 dark:bg-slate-800', baseQ: 20 },
         ];
 
         const LOG_TYPES = [
-            { id: 'questions', label: 'Questões', icon: Target, color: 'text-blue-500' },
-            { id: 'anki', label: 'Anki', icon: Layers, color: 'text-purple-500' },
-            { id: 'class', label: 'Aula', icon: MonitorPlay, color: 'text-red-500' },
-            { id: 'reading', label: 'Leitura', icon: BookOpen, color: 'text-emerald-500' },
-            { id: 'other', label: 'Outro', icon: PenTool, color: 'text-slate-500' },
+            { id: 'questions', label: 'Questões', icon: Icons.Target, color: 'text-blue-500' },
+            { id: 'anki', label: 'Anki', icon: Icons.Layers, color: 'text-purple-500' },
+            { id: 'class', label: 'Aula', icon: Icons.MonitorPlay, color: 'text-red-500' },
+            { id: 'reading', label: 'Leitura', icon: Icons.BookOpen, color: 'text-emerald-500' },
+            { id: 'other', label: 'Outro', icon: Icons.PenTool, color: 'text-slate-500' },
         ];
 
-        // --- HELPERS & LOGIC ---
-        const getTodayStr = () => new Date().toISOString().split('T')[0];
-        const formatDate = (dateStr) => { const [y, m, d] = dateStr.split('-'); return `${d}/${m}`; };
-        const formatFullDate = (dateStr) => { if (!dateStr) return ''; const d = new Date(dateStr + 'T12:00:00'); return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' }); };
+        const SYSTEM_PARAMS = { BASE_QUESTIONS: 20, MIN_QUESTIONS: 15, MAX_QUESTIONS: 100, TARGET_ACCURACY: 0.90, SPACING_FACTORS: { 'R0': 1.0, 'R1': 2.5, 'R2': 1.25, 'R3': 1.0, 'DEFAULT': 1.0 }, PERF_CAP: 2.2 };
         
+        // --- HELPERS ---
+        const getTodayStr = () => new Date().toISOString().split('T')[0];
+        const formatDate = (d) => { if(!d) return ''; const [y, m, day] = d.split('-'); return `${day}/${m}`; };
+        const formatFullDate = (d) => { if (!d) return ''; return new Date(d + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long' }); };
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
 
-        // --- PARAMETROS DO SISTEMA v7.1 ---
-        const SYSTEM_PARAMS = { 
-            BASE_QUESTIONS: 20, 
-            MIN_QUESTIONS: 15, 
-            MAX_QUESTIONS: 100,
-            TARGET_ACCURACY: 0.90, // 90%
-            SPACING_FACTORS: {
-                'R0': 1.0, 
-                'R1': 2.5,  // Pico Agressivo
-                'R2': 1.25, // Manutenção
-                'R3': 1.0,  // Longo Prazo
-                'DEFAULT': 1.0
-            },
-            PERF_CAP: 2.2
-        };
-
-        // --- CÁLCULO DE CARGA (ABSOLUTO E INTELIGENTE) ---
-        const calculateNextLoad = (importanceId, difficultyId, nextStageType, accuracy) => {
-            // 1. Base Fixa pela Importância
+        const calculateNextLoad = (importanceId, diffId, stage, acc) => {
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
-            const base = impObj.baseQ; 
-
-            // 2. Fator de Estágio
-            const stageFactor = SYSTEM_PARAMS.SPACING_FACTORS[nextStageType] || SYSTEM_PARAMS.SPACING_FACTORS['DEFAULT'];
-
-            // 3. Fator de Dificuldade (10% variação)
-            const diffWeight = DIFFICULTY_LEVELS.find(d => d.id === difficultyId)?.weight || 1.0;
-
-            // 4. Fator de Performance com Zona de Tolerância
+            const base = impObj.baseQ;
+            const stageFactor = SYSTEM_PARAMS.SPACING_FACTORS[stage] || 1.0;
+            const diffWeight = diffId === 'easy' ? 0.9 : diffId === 'hard' ? 1.1 : 1.0;
             let perfFactor = 1.0;
-            if (accuracy !== null) {
-                if (accuracy >= 1.0) {
-                    perfFactor = 0.9; // Bônus de Maestria: reduz 10%
-                } else if (accuracy >= 0.85) {
-                    perfFactor = 1.0; // Zona de Tolerância: mantém
-                } else {
-                    // Abaixo da tolerância: aumenta proporcional
-                    const target = SYSTEM_PARAMS.TARGET_ACCURACY;
-                    const gap = Math.max(0, target - accuracy);
-                    perfFactor = Math.min(SYSTEM_PARAMS.PERF_CAP, 1 + (gap * 2.0));
-                }
+            if (acc !== null) {
+                if (acc >= 1.0) perfFactor = 0.9;
+                else if (acc < 0.85) { const gap = Math.max(0, 0.90 - acc); perfFactor = Math.min(2.2, 1 + (gap * 2.0)); }
             }
-
-            // 5. Cálculo Final
             let n = Math.round(base * stageFactor * diffWeight * perfFactor);
-
-            // 6. Regra de Ouro (<60% = +10q)
-            if (accuracy !== null && accuracy < 0.60) {
-                n += 10;
-            }
-
-            // 7. Limites
-            return Math.max(SYSTEM_PARAMS.MIN_QUESTIONS, Math.min(n, SYSTEM_PARAMS.MAX_QUESTIONS));
+            if (acc !== null && acc < 0.60) n += 10;
+            return Math.max(15, Math.min(n, 100));
         };
 
-        const generateSchedule = (studyDate, importanceId) => {
-            const d0 = new Date(studyDate + 'T12:00:00');
-            const addDays = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
-            
-            // R0 inicial
+        const generateSchedule = (date, importanceId) => {
+            const d0 = new Date(date + 'T12:00:00');
+            const add = (d, days) => { const r = new Date(d); r.setDate(r.getDate() + days); return r.toISOString().split('T')[0]; };
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
-            const qR0 = impObj.baseQ;
-
-            // Projeções Iniciais (Accuracy=null, Diff='medium' -> Padrão)
-            const qR1_Proj = calculateNextLoad(importanceId, 'medium', 'R1', null);
-            const qR2_Proj = calculateNextLoad(importanceId, 'medium', 'R2', null);
-            const qR3_Proj = calculateNextLoad(importanceId, 'medium', 'R3', null);
+            
+            const q1 = calculateNextLoad(importanceId, 'medium', 'R1', null);
+            const q2 = calculateNextLoad(importanceId, 'medium', 'R2', null);
+            const q3 = calculateNextLoad(importanceId, 'medium', 'R3', null);
 
             return [
-                { type: 'R0', date: studyDate, label: 'R0: Fixação', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR0 },
-                { type: 'R1', date: addDays(d0, 7), label: 'R1: Pico', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR1_Proj }, 
-                { type: 'R2', date: addDays(d0, 30), label: 'R2: Manutenção', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR2_Proj }, 
-                { type: 'R3', date: addDays(d0, 60), label: 'R3: Longo Prazo', done: false, correct: 0, total: 0, favorites: 0, difficulty: null, targetQ: qR3_Proj } 
+                { type: 'R0', date: date, label: 'R0: Fixação', done: false, correct: 0, total: 0, difficulty: null, targetQ: impObj.baseQ },
+                { type: 'R1', date: add(d0, 7), label: 'R1: Pico', done: false, correct: 0, total: 0, difficulty: null, targetQ: q1 },
+                { type: 'R2', date: add(d0, 30), label: 'R2: Manutenção', done: false, correct: 0, total: 0, difficulty: null, targetQ: q2 },
+                { type: 'R3', date: add(d0, 60), label: 'R3: Longo', done: false, correct: 0, total: 0, difficulty: null, targetQ: q3 }
             ];
         };
 
-        // --- SYNC & STORAGE ---
         const mergeItems = (local, cloud) => {
             const map = new Map();
             local.forEach(i => map.set(i.id, i));
@@ -265,16 +208,14 @@
             return Array.from(map.values());
         };
 
+        // --- HOOKS ---
         const useSync = (topics, logs, setTopics, setLogs) => {
             const [status, setStatus] = useState('offline');
             const [config, setConfig] = useState(() => safeJSONParse('resiflow_fb_config', USER_FIREBASE_CONFIG));
             const [syncKey, _setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
             
             const setSyncKey = (newKey) => {
-                if (newKey !== syncKey) {
-                    setTopics([]); 
-                    setLogs([]);   
-                }
+                if (newKey !== syncKey) { setTopics([]); setLogs([]); }
                 _setSyncKey(newKey);
                 localStorage.setItem('resiflow_sync_key', newKey);
             };
@@ -323,27 +264,33 @@
 
         // --- COMPONENTS ---
 
-        const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
+        const ModalWrapper = ({ isOpen, onClose, children, title }) => {
             if (!isOpen) return null;
-            const [tempKey, setTempKey] = useState(syncKey);
-            
-            useEffect(() => setTempKey(syncKey), [syncKey]);
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+                    <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh]">
+                        <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3>
+                            <button onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button>
+                        </div>
+                        <div className="overflow-y-auto p-0">{children}</div>
+                    </div>
+                </div>
+            );
+        };
 
-            const handleSyncSave = () => {
-                setSyncKey(tempKey);
-                onClose();
-            };
+        // 1. Settings Modal
+        const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
+            const [tempKey, setTempKey] = useState(syncKey);
+            useEffect(() => setTempKey(syncKey), [syncKey]);
 
             const handleExport = () => {
                 const dataStr = JSON.stringify({ topics, logs }, null, 2);
                 const blob = new Blob([dataStr], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `resiflow_backup_${getTodayStr()}.json`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+                const a = document.createElement('a'); a.href = url; a.download = `resiflow_bkp_${getTodayStr()}.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
             };
 
             const handleImport = (e) => {
@@ -355,449 +302,549 @@
                         const data = JSON.parse(event.target.result);
                         if (data.topics) setTopics(prev => mergeItems(prev, data.topics));
                         if (data.logs) setLogs(prev => mergeItems(prev, data.logs));
-                        alert('Backup importado com sucesso!');
-                        onClose();
-                    } catch (err) {
-                        alert('Erro ao importar arquivo.');
-                    }
+                        alert('Dados importados!'); onClose();
+                    } catch (err) { alert('Erro ao ler arquivo.'); }
                 };
                 reader.readAsText(file);
             };
 
             return (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-200 dark:border-zinc-800">
-                        <div className="flex justify-between items-center mb-6"><h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2"><Settings size={20} className="text-slate-500"/> Configurações</h3><button onClick={onClose}><X className="text-slate-400"/></button></div>
-                        <div className="space-y-6">
-                            <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50">
-                                <h4 className="font-bold text-sm text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-2"><Cloud size={16}/> Sincronização Nuvem</h4>
-                                <div className="space-y-3">
-                                    <div><label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Acesso</label><div className="flex gap-2"><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Crie uma senha única" className="flex-1 p-2 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 text-sm dark:text-white font-mono" /><button onClick={handleSyncSave} className="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg font-bold text-xs">Salvar</button></div></div>
-                                    <div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado e Sincronizando' : 'Desconectado'}</span></div>
-                                </div>
-                            </div>
-                            <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
-                                <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><FileJson size={16}/> Backup Local (.json)</h4>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Salve seus dados manualmente ou restaure de um arquivo.</p>
-                                <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-slate-200 dark:bg-zinc-700 hover:bg-slate-300 dark:hover:bg-zinc-600 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div>
+                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Configurações">
+                    <div className="p-6 space-y-6">
+                         <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50">
+                            <h4 className="font-bold text-sm text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-2"><Icons.Cloud size={16}/> Sincronização Nuvem</h4>
+                            <div className="space-y-3">
+                                <div><label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Acesso</label><div className="flex gap-2"><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Crie uma senha única" className="flex-1 p-2 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 text-sm dark:text-white font-mono" /><button onClick={() => { setSyncKey(tempKey); onClose(); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg font-bold text-xs">Salvar</button></div></div>
+                                <div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado e Sincronizando' : 'Desconectado'}</span></div>
                             </div>
                         </div>
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
+                            <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><Icons.FileJson size={16}/> Backup Local</h4>
+                            <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-white dark:bg-zinc-700 hover:bg-slate-100 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-600"><Icons.Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Icons.Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div>
+                        </div>
                     </div>
-                </div>
+                </ModalWrapper>
             );
         };
 
+        // 2. Pomodoro Timer
         const PomodoroTimer = ({ isOpen, onClose }) => {
-            if (!isOpen) return null;
+            if(!isOpen) return null;
             const [timeLeft, setTimeLeft] = useState(25 * 60);
             const [isActive, setIsActive] = useState(false);
-            const [mode, setMode] = useState('focus');
-            useEffect(() => { let i = null; if (isActive && timeLeft > 0) i = setInterval(() => setTimeLeft(t => t - 1), 1000); else if (timeLeft === 0) setIsActive(false); return () => clearInterval(i); }, [isActive, timeLeft]);
-            const toggle = () => setIsActive(!isActive);
-            const reset = () => { setIsActive(false); setTimeLeft(mode === 'focus' ? 25 * 60 : mode === 'short' ? 5 * 60 : 15 * 60); };
-            const setM = (m) => { setMode(m); setIsActive(false); setTimeLeft(m === 'focus' ? 25 * 60 : m === 'short' ? 5 * 60 : 15 * 60); };
-            const fmt = (s) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
-            const prog = ((mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900) - timeLeft) / (mode === 'focus' ? 1500 : mode === 'short' ? 300 : 900) * 100;
+            const [mode, setMode] = useState('focus'); // focus, short, long
+            
+            useEffect(() => {
+                let interval = null;
+                if (isActive && timeLeft > 0) interval = setInterval(() => setTimeLeft(t => t - 1), 1000);
+                else if (timeLeft === 0) setIsActive(false);
+                return () => clearInterval(interval);
+            }, [isActive, timeLeft]);
+
+            const modes = { focus: 25*60, short: 5*60, long: 15*60 };
+            const changeMode = (m) => { setMode(m); setIsActive(false); setTimeLeft(modes[m]); };
+            const fmt = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+            const progress = ((modes[mode] - timeLeft) / modes[mode]) * 100;
+
             return (
-                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 dark:border-zinc-800 flex flex-col items-center relative">
-                        <button onClick={onClose} className="absolute top-4 right-4 p-1 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><X size={20} className="text-slate-400"/></button>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2"><Timer size={22} className="text-emerald-500"/> Pomodoro</h3>
-                        <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-zinc-950 p-1 rounded-xl">
-                            {['focus', 'short', 'long'].map(m => <button key={m} onClick={() => setM(m)} className={`px-3 py-1.5 text-xs font-bold rounded-lg capitalize ${mode === m ? 'bg-white dark:bg-zinc-800 shadow-sm text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>{m}</button>)}
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                     <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><Icons.X size={24}/></button>
+                        <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 text-lg"><Icons.Timer className="text-emerald-500"/> Foco & Fluxo</h3>
+                        
+                        <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-zinc-950 p-1.5 rounded-xl">
+                            {Object.keys(modes).map(m => (
+                                <button key={m} onClick={() => changeMode(m)} className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all ${mode === m ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400'}`}>
+                                    {m === 'focus' ? 'Foco' : m === 'short' ? 'Pausa Curta' : 'Pausa Longa'}
+                                </button>
+                            ))}
                         </div>
-                        <div className="relative w-48 h-48 flex items-center justify-center mb-8">
-                            <svg className="absolute top-0 left-0 w-full h-full transform -rotate-90"><circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-zinc-800"/><circle cx="96" cy="96" r="88" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={552} strokeDashoffset={552 - (552 * prog) / 100} className="text-emerald-500 transition-all duration-1000 ease-linear" strokeLinecap="round"/></svg>
-                            <div className="text-5xl font-black text-slate-800 dark:text-white tracking-wider font-mono">{fmt(timeLeft)}</div>
+
+                        <div className="relative w-56 h-56 flex items-center justify-center mb-8">
+                            <svg className="absolute top-0 left-0 w-full h-full transform -rotate-90">
+                                <circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-zinc-800"/>
+                                <circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={628} strokeDashoffset={628 - (628 * progress) / 100} className="text-emerald-500 transition-all duration-1000 ease-linear" strokeLinecap="round"/>
+                            </svg>
+                            <div className="text-6xl font-black text-slate-800 dark:text-white tracking-widest font-mono">{fmt(timeLeft)}</div>
                         </div>
-                        <div className="flex gap-4"><button onClick={toggle} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600' : 'bg-emerald-500 text-white'}`}>{isActive ? <Pause/> : <Play/>}</button><button onClick={reset} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400"><RotateCcw/></button></div>
-                    </div>
+
+                        <div className="flex gap-4">
+                            <button onClick={() => setIsActive(!isActive)} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-95 ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-500 text-white shadow-emerald-500/30'}`}>
+                                {isActive ? <Icons.Pause fill="currentColor"/> : <Icons.Play fill="currentColor" className="ml-1"/>}
+                            </button>
+                            <button onClick={() => changeMode(mode)} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                                <Icons.RotateCcw/>
+                            </button>
+                        </div>
+                     </div>
                 </div>
             );
         };
 
-        const ModalReview = ({ isOpen, onClose, task, onSave }) => {
-            if (!isOpen || !task) return null;
-            const [correct, setCorrect] = useState('');
-            const [total, setTotal] = useState('');
-            const [favorites, setFavorites] = useState('');
-            const [difficulty, setDifficulty] = useState('medium');
-            const numCorrect = parseInt(correct) || 0;
-            const numTotal = parseInt(total) || 0;
-            const percentage = numTotal > 0 ? Math.round((numCorrect / numTotal) * 100) : 0;
-            const handleSubmit = (e) => { e.preventDefault(); onSave({ correct: numCorrect, total: numTotal, favorites: parseInt(favorites) || 0, difficulty }); setCorrect(''); setTotal(''); setFavorites(''); setDifficulty('medium'); onClose(); };
-            return (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full p-6 border border-slate-100 dark:border-zinc-800">
-                        <div className="flex justify-between items-start mb-6"><div><h3 className="text-xl font-bold text-slate-800 dark:text-white">{task.topicTitle}</h3><div className="flex items-center gap-2 mt-1"><span className="text-xs font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 px-2 py-1 rounded uppercase tracking-wide">{task.label}</span>{task.targetQ && <span className="text-xs font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 px-2 py-1 rounded flex items-center gap-1"><Target size={12}/> Meta: {task.targetQ}</span>}</div></div><button onClick={onClose}><X className="text-slate-400" /></button></div>
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-4"><div className="space-y-1"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Acertos</label><input type="number" required autoFocus min="0" className="w-full p-4 bg-emerald-50 dark:bg-emerald-900/20 border-2 border-emerald-100 dark:border-emerald-800 rounded-xl text-2xl font-bold text-emerald-600 dark:text-emerald-400 focus:ring-2 focus:ring-emerald-500 outline-none text-center" value={correct} onChange={e => setCorrect(e.target.value)} /></div><div className="space-y-1"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Total</label><input type="number" required min="1" className="w-full p-4 bg-slate-50 dark:bg-zinc-800/50 border-2 border-slate-100 dark:border-zinc-700 rounded-xl text-2xl font-bold text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none text-center" value={total} onChange={e => setTotal(e.target.value)} /></div></div>
-                            <div className="bg-slate-50 dark:bg-zinc-800/50 rounded-xl p-4 flex items-center justify-between border border-slate-100 dark:border-zinc-700"><span className="text-sm font-medium text-slate-500 dark:text-slate-400">Aproveitamento</span><div className={`text-3xl font-black ${percentage >= 90 ? 'text-emerald-500' : percentage >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>{percentage}%</div></div>
-                            <div className="space-y-2"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Dificuldade</label><div className="grid grid-cols-3 gap-2">{DIFFICULTY_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => setDifficulty(lvl.id)} className={`p-3 rounded-xl flex flex-col items-center gap-1 transition-all border-2 ${difficulty === lvl.id ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-slate-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-slate-400 hover:border-slate-200 dark:hover:border-zinc-600'}`}><lvl.icon size={20} /> <span className="text-xs font-bold">{lvl.label}</span></button>))}</div></div>
-                            <div className="relative"><label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase flex items-center gap-1 mb-1"><Star size={12} className="fill-yellow-400 text-yellow-400"/> Favoritas</label><input type="number" className="w-full p-3 border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 rounded-xl text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-yellow-400 outline-none" placeholder="0" value={favorites} onChange={e => setFavorites(e.target.value)} /></div>
-                            <button type="submit" className="w-full bg-slate-900 dark:bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-slate-800 dark:hover:bg-blue-700 transition flex items-center justify-center gap-2"><CheckCircle2 size={20} /> Concluir</button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const CalendarDayModal = ({ date, reviews, onClose, onOpenReview }) => {
-            if (!date) return null;
-            const pendingReviews = reviews.filter(r => !r.done);
-            const doneReviews = reviews.filter(r => r.done);
-            const hasActivity = reviews.length > 0;
-
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden border border-slate-100 dark:border-zinc-800 max-h-[80vh] flex flex-col">
-                        <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-slate-50 dark:bg-zinc-950 shrink-0">
-                            <h3 className="font-bold text-lg capitalize text-slate-800 dark:text-white flex items-center gap-2"><CalendarIcon size={18} className="text-blue-500"/> {formatFullDate(date)}</h3>
-                            <button onClick={onClose} className="p-1 hover:bg-slate-200 dark:hover:bg-zinc-800 rounded-full transition"><X size={20} className="text-slate-400"/></button>
-                        </div>
-                        <div className="overflow-y-auto p-4 space-y-4 flex-1">
-                            {!hasActivity ? (<div className="text-center py-8 text-slate-400"><p className="text-sm">Nenhuma atividade registrada.</p></div>) : (
-                                <>
-                                    {pendingReviews.length > 0 && (
-                                        <div>
-                                            <h4 className="text-xs font-bold text-red-500 uppercase mb-2 flex items-center gap-1"><AlertCircle size={12}/> Pendentes ({pendingReviews.length})</h4>
-                                            <div className="space-y-2">{pendingReviews.map((item, idx) => { 
-                                                const areaInfo = AREAS.find(a => a.id === item.area) || AREAS[0]; 
-                                                const impInfo = IMPORTANCE_LEVELS.find(i => i.id === item.importance) || IMPORTANCE_LEVELS[1];
-                                                return (
-                                                    <div key={idx} className="p-3 rounded-xl border bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 flex flex-col gap-2">
-                                                        <div className="flex justify-between items-start">
-                                                            <h4 className="font-bold text-sm leading-tight text-slate-800 dark:text-white">{item.topicTitle}</h4>
-                                                            <span className="text-xs bg-slate-100 dark:bg-zinc-700 text-slate-500 dark:text-slate-300 px-1.5 py-0.5 rounded font-bold">{item.label.split(':')[0]}</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between mt-1">
-                                                            <div className="flex gap-1">
-                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded border ${areaInfo.color} bg-transparent`}>{areaInfo.name}</span>
-                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded border bg-transparent border-current opacity-70 ${impInfo.color}`}>{impInfo.label}</span>
-                                                            </div>
-                                                            {item.targetQ && <span className="text-xs text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1"><Target size={12}/> {item.targetQ}q</span>}
-                                                        </div>
-                                                        <button onClick={() => { onClose(); onOpenReview(item.topicId, item.reviewIdx); }} className="w-full mt-1 bg-slate-900 dark:bg-blue-600 text-white py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition">Revisar Agora</button>
-                                                    </div>
-                                                ) 
-                                            })}</div>
-                                        </div>
-                                    )}
-                                    {doneReviews.length > 0 && (
-                                        <div>
-                                            <h4 className="text-xs font-bold text-emerald-500 uppercase mb-2 mt-2 flex items-center gap-1"><CheckCircle2 size={12}/> Concluídos ({doneReviews.length})</h4>
-                                            <div className="space-y-2">{doneReviews.map((item, idx) => { 
-                                                return (
-                                                    <div key={idx} className="p-3 rounded-xl border bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-800/30 flex gap-3 opacity-75">
-                                                        <div className="mt-1 w-2 h-2 rounded-full shrink-0 bg-emerald-500"></div>
-                                                        <div className="flex-1">
-                                                            <h4 className="font-bold text-sm leading-tight text-slate-600 dark:text-slate-300">{item.topicTitle}</h4>
-                                                            <div className="flex items-center gap-2 mt-1">
-                                                                <span className="text-[10px] text-slate-400 uppercase font-bold">{item.label.split(':')[0]}</span>
-                                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{item.correct}/{item.total} ({Math.round((item.correct/item.total)*100)}%)</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                ) 
-                                            })}</div>
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-
+        // 3. Diary View
         const DiaryView = ({ logs, onAddLog, onDeleteLog }) => {
             const [type, setType] = useState('questions');
             const [desc, setDesc] = useState('');
             const [val, setVal] = useState('');
             const [date, setDate] = useState(getTodayStr());
-            const handleSubmit = (e) => { e.preventDefault(); if (!desc || !val) return; onAddLog({ id: generateId(), date, type, desc, val, updatedAt: Date.now(), deleted: false }); setDesc(''); setVal(''); };
-            const groupedLogs = useMemo(() => { const groups = {}; logs.filter(l => !l.deleted).forEach(l => { if (!groups[l.date]) groups[l.date] = []; groups[l.date].push(l); }); return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0])); }, [logs]);
-            return (
-                <div className="space-y-6">
-                    <section className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800"><h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2"><Notebook size={14}/> Novo Registro Diário</h2><form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end"><div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Data</label><input type="date" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11" value={date} onChange={e => setDate(e.target.value)} /></div><div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Atividade</label><div className="relative"><select className="w-full p-2.5 pl-9 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 appearance-none" value={type} onChange={e => setType(e.target.value)}>{LOG_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select><div className="absolute left-3 top-3 pointer-events-none text-slate-400">{(() => { const T = LOG_TYPES.find(t => t.id === type); const I = T ? T.icon : Target; return <I size={16}/> })()}</div></div></div><div className="md:col-span-4"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição</label><input type="text" placeholder="Ex: Aula de ECG" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11" value={desc} onChange={e => setDesc(e.target.value)} /></div><div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Valor/Qtd</label><input type="text" placeholder="Ex: 50 / 30min" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11" value={val} onChange={e => setVal(e.target.value)} /></div><div className="md:col-span-1"><button type="submit" className="h-11 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center"><Plus size={20}/></button></div></form></section>
-                    <div className="space-y-6">{groupedLogs.length === 0 ? (<div className="text-center py-12 text-slate-400 dark:text-slate-600"><Notebook className="mx-auto mb-2 opacity-50" size={32}/><p>Nenhum registro ainda.</p></div>) : (groupedLogs.map(([dateStr, dayLogs]) => (<div key={dateStr}><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider sticky top-20 bg-slate-50/90 dark:bg-zinc-950/90 py-2 backdrop-blur-sm z-10">{formatFullDate(dateStr)}</h3><div className="space-y-2">{dayLogs.map(log => { const logType = LOG_TYPES.find(t => t.id === log.type) || LOG_TYPES[4]; const Icon = logType.icon; return (<div key={log.id} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center gap-3 shadow-sm group"><div className={`p-2 rounded-lg bg-slate-100 dark:bg-zinc-950 ${logType.color} dark:opacity-90`}><Icon size={18}/></div><div className="flex-1"><div className="font-bold text-slate-800 dark:text-white text-sm">{log.desc}</div><div className="text-xs text-slate-500 dark:text-slate-400">{logType.label}</div></div><div className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-zinc-950 px-2 py-1 rounded text-xs">{log.val}</div><button onClick={() => onDeleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 transition"><Trash2 size={14}/></button></div>) })}</div></div>)))}</div>
-                </div>
-            );
-        };
 
-        const DashboardView = ({ topics }) => {
-            const [selectedArea, setSelectedArea] = useState(null);
-            const totalTopics = topics.filter(t => !t.deleted).length;
-            const totalReviewsDone = topics.filter(t => !t.deleted).reduce((acc, t) => acc + t.reviews.filter(r => r.done).length, 0);
-            const totalQuestions = topics.filter(t => !t.deleted).reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.total || 0), 0), 0);
-            const totalCorrect = topics.filter(t => !t.deleted).reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.correct || 0), 0), 0);
-            const globalAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-            const areaStats = AREAS.filter(a => a.id !== 'all').map(area => {
-                const areaTopics = topics.filter(t => !t.deleted && t.area === area.id);
-                const areaTotalQ = areaTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.total || 0), 0), 0);
-                const areaCorrect = areaTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.correct || 0), 0), 0);
-                const accuracy = areaTotalQ > 0 ? Math.round((areaCorrect / areaTotalQ) * 100) : 0;
-                return { ...area, accuracy, totalQ: areaTotalQ, count: areaTopics.length };
-            }).sort((a, b) => b.accuracy - a.accuracy);
-            const weakTopics = topics.filter(t => !t.deleted).map(t => {
-                const tTotal = t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.total || 0), 0);
-                const tCorrect = t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.correct || 0), 0);
-                const acc = tTotal > 0 ? (tCorrect/tTotal) : 1;
-                return { ...t, acc };
-            }).filter(t => t.acc < 0.6 && t.acc > 0).slice(0, 5);
-            const selectedAreaTopics = selectedArea ? topics.filter(t => !t.deleted && t.area === selectedArea).map(t => {
-                const tTotal = t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.total || 0), 0);
-                const tCorrect = t.reviews.filter(r => r.done).reduce((sum, r) => sum + (r.correct || 0), 0);
-                const acc = tTotal > 0 ? Math.round((tCorrect/tTotal)*100) : 0;
-                return { ...t, tTotal, acc };
-            }) : [];
-
-            if (selectedArea) {
-                const areaInfo = AREAS.find(a => a.id === selectedArea);
-                return (
-                    <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <button onClick={() => setSelectedArea(null)} className="text-sm text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white flex items-center gap-2 mb-2"><X size={16}/> Voltar para Visão Geral</button>
-                        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4">{areaInfo.name} - Detalhes</h3>
-                        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden">
-                            {selectedAreaTopics.length === 0 ? (
-                                <div className="p-8 text-center text-slate-400">Nenhum tópico cadastrado nesta área.</div>
-                            ) : (
-                                <div className="overflow-x-auto"><table className="w-full text-sm text-left text-slate-600 dark:text-slate-300"><thead className="text-xs text-slate-400 uppercase bg-slate-50 dark:bg-zinc-950"><tr><th className="px-4 py-3">Assunto</th><th className="px-4 py-3">Qtd. Questões</th><th className="px-4 py-3">Acerto</th></tr></thead><tbody>{selectedAreaTopics.map(t => (<tr key={t.id} className="border-b border-slate-100 dark:border-zinc-800 last:border-0"><td className="px-4 py-3 font-medium">{t.title} <span className="text-[10px] text-slate-400 block">{t.subarea}</span></td><td className="px-4 py-3">{t.tTotal}</td><td className={`px-4 py-3 font-bold ${t.acc >= 80 ? 'text-emerald-500' : t.acc >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>{t.acc}%</td></tr>))}</tbody></table></div>
-                            )}
-                        </div>
-                    </div>
-                )
-            }
-
-            return (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4"><div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800"><div className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase">Aproveitamento Global</div><div className={`text-4xl font-black mt-1 ${globalAccuracy >= 80 ? 'text-emerald-500' : globalAccuracy >= 60 ? 'text-yellow-500' : 'text-red-500'}`}>{globalAccuracy}%</div><div className="text-xs text-slate-400 mt-1">{totalCorrect} acertos de {totalQuestions} questões</div></div><div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800"><div className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase">Volume de Estudo</div><div className="text-4xl font-black mt-1 text-slate-800 dark:text-white">{totalReviewsDone}</div><div className="text-xs text-slate-400 mt-1">Revisões concluídas em {totalTopics} tópicos</div></div><div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col justify-center"><div className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase mb-2">Pontos de Atenção</div>{weakTopics.length === 0 ? <div className="text-emerald-500 text-sm font-bold">Nenhum tema crítico! 🎉</div> : <div className="space-y-1">{weakTopics.map(t => (<div key={t.id} className="flex justify-between text-xs"><span className="truncate max-w-[150px] text-slate-700 dark:text-slate-300">{t.title}</span><span className="text-red-500 font-bold">{Math.round(t.acc*100)}%</span></div>))}</div>}</div></div>
-                    <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800"><h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><BarChart3 size={18} className="text-blue-500"/> Desempenho por Área</h3><div className="space-y-4">{areaStats.map(area => (<div key={area.id} onClick={() => setSelectedArea(area.id)} className="group cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/50 p-2 rounded-lg transition-colors -mx-2"><div className="flex justify-between text-xs mb-1 font-medium"><span className="text-slate-700 dark:text-slate-300 flex items-center gap-1">{area.name} <span className="text-slate-400">({area.count} temas)</span> <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity"/></span><div className="flex gap-3"><span className="text-slate-400 font-normal">{area.totalQ}q feitas</span><span className={area.accuracy >= 80 ? 'text-emerald-500' : 'text-slate-500'}>{area.accuracy}%</span></div></div><div className="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden"><div className={`h-full rounded-full ${area.accuracy >= 80 ? 'bg-emerald-500' : area.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{width: `${area.accuracy}%`}}></div></div></div>))}</div></div>
-                </div>
-            )
-        }
-
-        // --- RESTORED AND IMPROVED: CalendarView ---
-        const CalendarView = ({ topics, onOpenReview }) => {
-            const today = new Date();
-            const currentMonth = today.getMonth();
-            const currentYear = today.getFullYear();
-            const [selectedDate, setSelectedDate] = useState(null);
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            const startDay = new Date(currentYear, currentMonth, 1).getDay(); 
-            const days = [];
-            for (let i = 0; i < startDay; i++) days.push(null);
-            for (let i = 1; i <= daysInMonth; i++) days.push(i);
-            
-            const getReviewsForDate = (dateStr) => { 
-                const list = []; 
-                topics.forEach(topic => { 
-                    if(topic.deleted) return; 
-                    topic.reviews.forEach((review, idx) => { 
-                        if (review.date === dateStr) { 
-                            list.push({ 
-                                topicTitle: topic.title, 
-                                area: topic.area, 
-                                topicId: topic.id, 
-                                reviewIdx: idx, 
-                                importance: topic.importance, 
-                                ...review 
-                            }); 
-                        } 
-                    }); 
-                }); 
-                return list; 
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!desc || !val) return;
+                onAddLog({ id: generateId(), date, type, desc, val, updatedAt: Date.now(), deleted: false });
+                setDesc(''); setVal('');
             };
+
+            const groupedLogs = useMemo(() => {
+                const groups = {};
+                logs.filter(l => !l.deleted).forEach(l => { if (!groups[l.date]) groups[l.date] = []; groups[l.date].push(l); });
+                return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+            }, [logs]);
+
             return (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm p-4">
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4 capitalize">{today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3>
-                    <div className="grid grid-cols-7 gap-1 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div>
-                    <div className="grid grid-cols-7 gap-1">{days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviewsForDay = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pendingCount = reviewsForDay.filter(r => !r.done).length; const doneCount = reviewsForDay.filter(r => r.done).length; const hasActivity = reviewsForDay.length > 0; return (<div key={idx} onClick={() => setSelectedDate(dateStr)} className={`aspect-square rounded-lg border flex flex-col items-center justify-center relative cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-900' : 'border-slate-100 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-600'}`}><span className={`text-xs font-medium ${isToday ? 'text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400'}`}>{day}</span>{hasActivity && (<div className="mt-1 flex gap-0.5 justify-center flex-wrap max-w-[80%]">{[...Array(Math.min(3, pendingCount))].map((_, i) => <div key={`p-${i}`} className="w-1.5 h-1.5 rounded-full bg-red-500"></div>)}{[...Array(Math.min(3, doneCount))].map((_, i) => <div key={`d-${i}`} className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>)}</div>)}</div>); })}</div>
-                    <div className="flex justify-center gap-4 mt-4 text-[10px] text-slate-400"><div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500"></div> A Fazer</div><div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div></div>
-                    <CalendarDayModal date={selectedDate} reviews={getReviewsForDate(selectedDate)} onClose={() => setSelectedDate(null)} onOpenReview={onOpenReview} />
+                <div className="space-y-6 animate-fade-in pb-20">
+                     <section className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800">
+                        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Icons.Notebook size={14}/> Novo Registro Diário</h2>
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                            <div className="md:col-span-3">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Atividade</label>
+                                <div className="relative">
+                                    <select className="w-full p-2.5 pl-9 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 appearance-none outline-none focus:border-blue-500" value={type} onChange={e => setType(e.target.value)}>
+                                        {LOG_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+                                    </select>
+                                    <div className="absolute left-3 top-3 pointer-events-none text-slate-400">
+                                        {(() => { const T = LOG_TYPES.find(t => t.id === type); const I = T ? T.icon : Icons.Target; return <I size={16}/> })()}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="md:col-span-5">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição</label>
+                                <input type="text" placeholder="Ex: Aula de ECG" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={desc} onChange={e => setDesc(e.target.value)} />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Qtd/Tempo</label>
+                                <input type="text" placeholder="Ex: 50 ou 30min" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={val} onChange={e => setVal(e.target.value)} />
+                            </div>
+                            <div className="md:col-span-2">
+                                <button type="submit" className="h-11 w-full bg-slate-900 dark:bg-white dark:text-black text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"><Icons.Plus size={18}/> Salvar</button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <div className="space-y-6">
+                        {groupedLogs.length === 0 ? (
+                            <div className="text-center py-12 text-slate-400 opacity-60">
+                                <Icons.Notebook className="mx-auto mb-2" size={32}/>
+                                <p>Nenhum registro ainda.</p>
+                            </div>
+                        ) : (
+                            groupedLogs.map(([dateStr, dayLogs]) => (
+                                <div key={dateStr}>
+                                    <h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider sticky top-20 bg-slate-50/90 dark:bg-black/0 py-2 backdrop-blur-sm z-10">{formatFullDate(dateStr)}</h3>
+                                    <div className="space-y-2">
+                                        {dayLogs.map(log => {
+                                            const logType = LOG_TYPES.find(t => t.id === log.type) || LOG_TYPES[4];
+                                            const Icon = logType.icon;
+                                            return (
+                                                <div key={log.id} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center gap-3 shadow-sm group">
+                                                    <div className={`p-2 rounded-lg bg-slate-100 dark:bg-zinc-950 ${logType.color} dark:opacity-90`}><Icon size={18}/></div>
+                                                    <div className="flex-1">
+                                                        <div className="font-bold text-slate-800 dark:text-white text-sm">{log.desc}</div>
+                                                        <div className="text-xs text-slate-500 dark:text-slate-400">{logType.label}</div>
+                                                    </div>
+                                                    <div className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-zinc-950 px-2.5 py-1 rounded-lg text-xs">{log.val}</div>
+                                                    <button onClick={() => onDeleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 transition"><Icons.Trash2 size={14}/></button>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             );
         };
 
-        const TopicCard = ({ topic, onOpenReview, onDelete }) => {
-            const [expanded, setExpanded] = useState(false);
-            const [isDeleting, setIsDeleting] = useState(false);
-            const impInfo = IMPORTANCE_LEVELS.find(i => i.id === topic.importance) || IMPORTANCE_LEVELS[1];
-            const areaInfo = AREAS.find(a => a.id === topic.area) || AREAS[0]; 
-            const completedReviews = topic.reviews.filter(r => r.done).length;
-            const progressPercent = (completedReviews / 4) * 100;
+        // 4. Calendar View (Improved)
+        const CalendarView = ({ topics, onOpenReview }) => {
+            const [displayDate, setDisplayDate] = useState(new Date());
+            const [selectedDate, setSelectedDate] = useState(null);
+            
+            const currentMonth = displayDate.getMonth();
+            const currentYear = displayDate.getFullYear();
+            
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const startDay = new Date(currentYear, currentMonth, 1).getDay();
+            const days = Array(startDay).fill(null).concat([...Array(daysInMonth).keys()].map(i => i + 1));
+
+            const prevMonth = () => setDisplayDate(new Date(currentYear, currentMonth - 1, 1));
+            const nextMonth = () => setDisplayDate(new Date(currentYear, currentMonth + 1, 1));
+            const goToday = () => setDisplayDate(new Date());
+
+            const getReviewsForDate = (dateStr) => {
+                const list = [];
+                topics.forEach(t => {
+                    if (t.deleted) return;
+                    t.reviews.forEach((r, idx) => {
+                        if (r.date === dateStr) list.push({ topic: t, review: r, idx });
+                    });
+                });
+                return list;
+            };
+
             return (
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                    <div className="p-5 cursor-pointer flex items-center justify-between" onClick={() => setExpanded(!expanded)}>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${areaInfo.color}`}>{areaInfo.name}</span>
-                                {/* Exibe a Prioridade no Card */}
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border bg-transparent border-current opacity-80 ${impInfo.color}`}>{impInfo.label}</span>
-                                {topic.subarea && <span className="text-[10px] font-bold px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-zinc-950 flex items-center gap-1"><Tag size={10}/> {topic.subarea}</span>}
-                                {topic.materialLink && <a href={topic.materialLink} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="text-[10px] font-bold px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 flex items-center gap-1 hover:opacity-80"><LinkIcon size={10}/> Material</a>}
+                <div className="animate-fade-in pb-20">
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">
+                                {displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+                            </h3>
+                            <div className="flex gap-1">
+                                <button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button>
+                                <button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button>
+                                <button onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button>
                             </div>
-                            <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight">{topic.title}</h3>
                         </div>
-                        <div className="flex items-center gap-4"><div className="hidden sm:flex flex-col items-end gap-1"><span className="text-xs font-bold text-slate-400">{completedReviews}/4</span><div className="w-16 h-1.5 bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full transition-all" style={{width: `${progressPercent}%`}}></div></div></div>{expanded ? <ChevronUp className="text-slate-400"/> : <ChevronDown className="text-slate-400"/>}</div>
+                        
+                        <div className="grid grid-cols-7 gap-2 mb-2">
+                            {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}
+                        </div>
+                        <div className="grid grid-cols-7 gap-2">
+                            {days.map((day, idx) => {
+                                if (!day) return <div key={idx} className="aspect-square"></div>;
+                                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                                const reviews = getReviewsForDate(dateStr);
+                                const isToday = dateStr === getTodayStr();
+                                const pending = reviews.filter(x => !x.review.done).length;
+                                const done = reviews.filter(x => x.review.done).length;
+                                const hasDots = pending > 0 || done > 0;
+
+                                return (
+                                    <button key={idx} onClick={() => reviews.length && setSelectedDate(dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${isToday ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}>
+                                        <span className={`text-sm font-bold`}>{day}</span>
+                                        {hasDots && (
+                                            <div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">
+                                                {[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}
+                                                {[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}
+                                            </div>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <div className="flex justify-center gap-4 mt-6 text-xs text-slate-500">
+                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div> A Fazer</div>
+                            <div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div>
+                        </div>
                     </div>
-                    {expanded && (<div className="px-5 pb-5 pt-0 border-t border-slate-50 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/30"><div className="mt-4 space-y-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const isLocked = !rev.done && !isNext; const performance = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const dateStr = formatDate(rev.date); return (<div key={idx} className={`relative flex items-center gap-4 p-3 rounded-xl border ${isNext ? 'bg-white dark:bg-zinc-900 border-blue-200 dark:border-blue-900 shadow-sm ring-1 ring-blue-500/20' : 'border-transparent'} ${isLocked ? 'opacity-50 grayscale' : ''}`}><div className={`w-1 h-10 rounded-full ${isDone ? (performance >= 90 ? 'bg-emerald-500' : 'bg-yellow-500') : (isNext ? 'bg-blue-500' : 'bg-slate-200 dark:bg-zinc-700')}`}></div><div className="w-16 text-center"><div className="text-xs font-black text-slate-400 uppercase">{rev.label.split(':')[0]}</div><div className="font-bold text-slate-700 dark:text-slate-300">{dateStr}</div></div><div className="flex-1">{isDone ? (<div><div className="flex items-center gap-2"><span className={`font-bold text-lg ${performance >= 90 ? 'text-emerald-600 dark:text-emerald-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{performance}%</span><span className="text-xs text-slate-400">({rev.correct}/{rev.total})</span></div>{rev.targetQ && <div className="text-[10px] text-slate-400">Meta: {rev.targetQ}</div>}</div>) : (<div><div className="text-sm font-medium text-slate-700 dark:text-slate-300">{rev.label.split(':')[1]}</div>{rev.targetQ && (<div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 text-xs font-medium mt-0.5"><Target size={12}/> <span>Meta: <span className="font-bold">{rev.targetQ}</span></span></div>)}</div>)}</div><div>{isDone ? (<div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center"><CheckCircle2 size={16}/></div>) : isNext ? (<button onClick={() => onOpenReview(topic.id, idx)} className="px-4 py-2 bg-slate-900 dark:bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-slate-800 dark:hover:bg-blue-700 transition">Revisar</button>) : (<div className="w-8 h-8 flex items-center justify-center"><Clock size={16} className="text-slate-300 dark:text-slate-600"/></div>)}</div></div>); })}</div><div className="mt-4 flex justify-end">{isDeleting ? (<div className="flex items-center gap-3 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg border border-red-100 dark:border-red-800 animate-in fade-in zoom-in-95 duration-200"><span className="text-xs font-bold text-red-800 dark:text-red-300">Tem certeza?</span><button onClick={() => onDelete(topic.id)} className="text-xs font-bold text-red-600 dark:text-red-400 hover:text-red-800 border-b border-red-200 hover:border-red-600 transition-colors">Sim</button><button onClick={() => setIsDeleting(false)} className="text-xs text-slate-400 hover:text-slate-600">Cancelar</button></div>) : (<button onClick={(e) => { e.stopPropagation(); setIsDeleting(true); }} className="text-xs text-red-400 hover:text-red-600 font-medium flex items-center gap-1 transition-colors px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 size={12}/> Excluir Tema</button>)}</div></div>)}</div>
+
+                    {/* Day Details Modal */}
+                    {selectedDate && (
+                         <ModalWrapper isOpen={!!selectedDate} onClose={() => setSelectedDate(null)} title={formatFullDate(selectedDate)}>
+                            <div className="p-4 space-y-3">
+                                {getReviewsForDate(selectedDate).length === 0 ? <p className="text-center text-slate-400 py-4">Nada agendado.</p> : getReviewsForDate(selectedDate).map((item, i) => (
+                                    <div key={i} className={`p-3 rounded-xl border flex items-center justify-between ${item.review.done ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900/30 opacity-70' : 'bg-white dark:bg-zinc-800 border-slate-200 dark:border-zinc-700'}`}>
+                                        <div>
+                                            <div className="font-bold text-sm text-slate-800 dark:text-white">{item.topic.title}</div>
+                                            <div className="text-xs text-slate-500">{item.review.label}</div>
+                                        </div>
+                                        {!item.review.done ? (
+                                            <button onClick={() => { setSelectedDate(null); onOpenReview(item.topic.id, item.idx); }} className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg">Revisar</button>
+                                        ) : (
+                                            <span className="text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1"><Icons.CheckCircle2 size={14}/> Feito</span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                         </ModalWrapper>
+                    )}
+                </div>
             );
         };
 
-        function App() {
-            const [topics, setTopics] = useState(() => safeJSONParse('resiflow_v3_data', []));
-            const [logs, setLogs] = useState(() => safeJSONParse('resiflow_logs', []));
-            const [darkMode, setDarkMode] = useState(() => localStorage.getItem('resiflow_theme') === 'dark');
-            const [viewMode, setViewMode] = useState('list'); 
-            const [filterArea, setFilterArea] = useState('all');
-            const [filterTime, setFilterTime] = useState('all'); 
-            const [searchTerm, setSearchTerm] = useState('');
+        const AddTopicModal = ({ isOpen, onClose, onSave }) => {
+            if (!isOpen) return null;
             const [title, setTitle] = useState('');
             const [area, setArea] = useState('clinica');
             const [subarea, setSubarea] = useState('');
             const [importance, setImportance] = useState('medium');
             const [date, setDate] = useState(getTodayStr());
             const [link, setLink] = useState('');
-            const [modalOpen, setModalOpen] = useState(false);
-            const [cloudModalOpen, setCloudModalOpen] = useState(false);
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if(!title) return;
+                onSave({ title, area, subarea, importance, date, link });
+                setTitle(''); setSubarea(''); setLink(''); onClose();
+            };
+            const subAreaOptions = SUB_AREAS[area] || [];
+            return (
+                 <ModalWrapper isOpen={isOpen} onClose={onClose} title="Novo Conteúdo">
+                        <div className="p-6 space-y-5">
+                            <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label><input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /></div>
+                            <div className="grid grid-cols-2 gap-4"><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select></div><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{subAreaOptions.map(s => <option key={s} value={s}>{s}</option>)}</select></div></div>
+                            <div className="space-y-3"><label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label><div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => setImportance(lvl.id)} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div></div>
+                            <div className="grid grid-cols-1 gap-4"><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={date} onChange={e => setDate(e.target.value)} /></div><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} /></div></div>
+                        </div>
+                        <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"><button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Plus size={20}/> Criar Plano</button></div>
+                 </ModalWrapper>
+            );
+        };
+
+        const TopicCard = ({ topic, onOpenReview, onDelete }) => {
+            const [expanded, setExpanded] = useState(false);
+            const areaConfig = AREAS.find(a => a.id === topic.area) || AREAS[0];
+            const activeBorder = areaConfig.accent;
+            const reviewsDone = topic.reviews.filter(r => r.done);
+            const completedCount = reviewsDone.length;
+            const avgAccuracy = reviewsDone.length > 0 ? Math.round(reviewsDone.reduce((acc, r) => acc + (r.correct/r.total), 0) / reviewsDone.length * 100) : 0;
+            const nextReview = topic.reviews.find(r => !r.done);
+            const isLate = nextReview && nextReview.date < getTodayStr();
+
+            return (
+                <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-zinc-800`}>
+                    <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
+                        <div className="flex justify-between items-start">
+                            <div className="flex-1 pr-4">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{topic.subarea || areaConfig.name}</span>
+                                    {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>}
+                                    {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>}
+                                </div>
+                                <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{topic.title}</h3>
+                            </div>
+                            <div className="flex flex-col items-end gap-1.5">
+                                {completedCount > 0 && ( <span className={`text-xs font-black px-2 py-0.5 rounded-full ${avgAccuracy >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>{avgAccuracy}%</span> )}
+                                <div className="flex gap-1">{[0,1,2,3].map(i => { const rev = topic.reviews[i]; let color = 'bg-slate-200 dark:bg-zinc-800'; if (rev && rev.done) color = (rev.correct/rev.total) >= 0.8 ? 'bg-emerald-500' : 'bg-amber-500'; else if (rev && !rev.done && (i === 0 || topic.reviews[i-1].done)) color = 'bg-blue-500 animate-pulse'; return <div key={i} className={`w-1.5 h-1.5 rounded-full ${color}`}></div> })}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {expanded && (
+                        <div className="px-4 pb-4 pt-0 bg-slate-50/50 dark:bg-zinc-950/30 border-t border-slate-100 dark:border-zinc-800 animate-fade-in">
+                            <div className="space-y-2 mt-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const isLateItem = !isDone && rev.date < getTodayStr(); return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? 'bg-white dark:bg-zinc-800 shadow-sm border border-blue-100 dark:border-blue-900/30' : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? 'text-blue-600 dark:text-blue-400' : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${isLateItem ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)} {isLateItem && '(Atrasado)'}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx)}} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-blue-500/20 active:scale-95 transition-transform">Revisar</button> ) : (<Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/>)} </div> ) })}</div>
+                            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center">{topic.materialLink ? ( <a href={topic.materialLink} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><Icons.LinkIcon size={12}/> Material</a> ) : <div></div>} <button onClick={(e) => { e.stopPropagation(); onDelete(topic.id); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Icons.Trash2 size={12}/> Excluir</button></div>
+                        </div>
+                    )}
+                    <div className="absolute top-5 right-4 pointer-events-none text-slate-300 dark:text-zinc-600">{expanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}</div>
+                </div>
+            );
+        };
+
+        const BentoDashboard = ({ topics }) => {
+            const stats = useMemo(() => {
+                const active = topics.filter(t => !t.deleted);
+                const reviewsDone = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).length, 0);
+                const totalQ = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0);
+                const totalC = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0);
+                const globalAcc = totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0;
+                const areaStats = AREAS.map(a => { const ts = active.filter(t => t.area === a.id); const q = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0); const c = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); return { ...a, acc: q > 0 ? Math.round((c/q)*100) : 0, q }; }).sort((a,b) => b.acc - a.acc);
+                return { active: active.length, reviewsDone, totalQ, globalAcc, areaStats };
+            }, [topics]);
+
+            return (
+                <div className="space-y-4 animate-fade-in pb-20">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="col-span-2 md:col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden">
+                            <Icons.Activity className="absolute right-4 top-4 opacity-20" size={80}/>
+                            <div className="relative z-10"><div className="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wide">Aproveitamento</div><div className="text-5xl font-black tracking-tight">{stats.globalAcc}%</div><div className="text-blue-100 text-xs mt-2 font-medium">{stats.totalQ} questões respondidas</div></div>
+                        </div>
+                        <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3"><Icons.CheckCircle2 size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.reviewsDone}</div><div className="text-xs text-slate-400 font-medium">Revisões Feitas</div></div>
+                        <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3"><Icons.Layers size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.active}</div><div className="text-xs text-slate-400 font-medium">Tópicos Ativos</div></div>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-100 dark:border-zinc-800 shadow-sm p-6"><h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><Icons.BarChart3 size={20} className="text-slate-400"/> Performance por Área</h3><div className="space-y-4">{stats.areaStats.map(area => (<div key={area.id} className="relative"><div className="flex justify-between text-xs mb-1.5 font-bold"><span className="text-slate-600 dark:text-slate-300">{area.name}</span><span className={area.acc >= 80 ? 'text-emerald-500' : area.acc >= 60 ? 'text-amber-500' : 'text-slate-400'}>{area.acc}%</span></div><div className="h-2.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${area.acc >= 80 ? 'bg-emerald-500' : area.acc >= 60 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-zinc-700'}`} style={{width: `${area.acc}%`}}></div></div></div>))}</div></div>
+                </div>
+            );
+        };
+
+        // 5. Main App Layout
+        function App() {
+            const [topics, setTopics] = useState(() => safeJSONParse('resiflow_v3_data', []));
+            const [logs, setLogs] = useState(() => safeJSONParse('resiflow_logs', []));
+            const [view, setView] = useState('list');
+            const [filter, setFilter] = useState('all');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [darkMode, setDarkMode] = useState(() => localStorage.getItem('resiflow_theme') === 'dark');
+            
+            // Modals State
+            const [modalAddOpen, setModalAddOpen] = useState(false);
+            const [reviewModalData, setReviewModalData] = useState(null);
             const [settingsOpen, setSettingsOpen] = useState(false);
             const [pomodoroOpen, setPomodoroOpen] = useState(false);
-            const [selectedTask, setSelectedTask] = useState(null);
-            const [installPrompt, setInstallPrompt] = useState(null);
-            const { status, config, setConfig, syncKey, setSyncKey, saveToCloud } = useSync(topics, logs, setTopics, setLogs);
-            const todayStr = getTodayStr();
+            const [deleteConfirmId, setDeleteConfirmId] = useState(null); // ID for topic to delete
 
-            useEffect(() => { const h = (e) => { e.preventDefault(); setInstallPrompt(e); }; window.addEventListener('beforeinstallprompt', h); return () => window.removeEventListener('beforeinstallprompt', h); }, []);
-            const handleInstall = () => { if (installPrompt) { installPrompt.prompt(); installPrompt.userChoice.then((c) => { if(c.outcome === 'accepted') setInstallPrompt(null); }); } };
+            // Sync Hook
+            const { status, syncKey, setSyncKey, saveToCloud } = useSync(topics, logs, setTopics, setLogs);
+
+            useEffect(() => {
+                if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('resiflow_theme', 'dark'); } 
+                else { document.documentElement.classList.remove('dark'); localStorage.setItem('resiflow_theme', 'light'); }
+            }, [darkMode]);
 
             useEffect(() => {
                 localStorage.setItem('resiflow_v3_data', JSON.stringify(topics));
                 localStorage.setItem('resiflow_logs', JSON.stringify(logs));
-                if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs), 1000); return () => clearTimeout(t); }
+                if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs), 2000); return () => clearTimeout(t); }
             }, [topics, logs, status]);
 
-            useEffect(() => { if (darkMode) { document.documentElement.classList.add('dark'); localStorage.setItem('resiflow_theme', 'dark'); } else { document.documentElement.classList.remove('dark'); localStorage.setItem('resiflow_theme', 'light'); } }, [darkMode]);
-
-            const handleAdd = (e) => {
-                e.preventDefault();
-                if (!title) return;
-                const schedule = generateSchedule(date, importance);
-                const newTopic = { id: generateId(), title, area, subarea, importance, materialLink: link, studyDate: date, reviews: schedule, archived: false, deleted: false, updatedAt: Date.now() };
-                setTopics(prev => [newTopic, ...prev]);
-                setTitle(''); setSubarea(''); setLink('');
-            };
-
-            const handleAddLog = (log) => { setLogs(prev => [log, ...prev]); };
-            const handleDeleteLog = (id) => { setLogs(prev => prev.map(l => l.id === id ? { ...l, deleted: true, updatedAt: Date.now() } : l)); };
-
-            const openReview = (topicId, reviewIdx) => { const topic = topics.find(t => t.id === topicId); const review = topic.reviews[reviewIdx]; setSelectedTask({ topicId, topicTitle: topic.title, label: review.label, targetQ: review.targetQ, reviewIdx }); setModalOpen(true); };
-            
-            // NOVO CALL FIXO: Ignora 'data.total' (previousTotal) e usa cálculo absoluto baseado na importância
-            const completeReview = (data) => { 
-                setTopics(prev => prev.map(topic => { 
-                    if (topic.id !== selectedTask.topicId) return topic; 
-                    const newReviews = [...topic.reviews]; 
-                    const currentIdx = selectedTask.reviewIdx; 
-                    newReviews[currentIdx] = { ...newReviews[currentIdx], done: true, correct: data.correct, total: data.total, favorites: data.favorites, difficulty: data.difficulty }; 
-                    if (currentIdx + 1 < newReviews.length) { 
-                        const accuracy = data.total > 0 ? (data.correct / data.total) : 0; 
-                        const nextReviewType = newReviews[currentIdx + 1].type; 
-                        // IMPORTANTE: AQUI A CORREÇÃO FINAL.
-                        // A função agora espera: (importanceId, difficultyId, nextStageType, accuracy)
-                        // Removemos 'data.total' da chamada.
-                        const nextLoad = calculateNextLoad(topic.importance, data.difficulty, nextReviewType, accuracy); 
-                        newReviews[currentIdx + 1].targetQ = nextLoad; 
-                    } 
-                    return { ...topic, reviews: newReviews, updatedAt: Date.now() }; 
-                })); 
-            };
-            
-            const deleteTopic = (id) => setTopics(prev => prev.map(t => t.id === id ? { ...t, deleted: true, updatedAt: Date.now() } : t));
-
-            const toggleFilterArea = (id) => {
-                setFilterArea(prev => prev === id ? 'all' : id);
-            };
-
-            const sortedTopics = useMemo(() => {
-                let list = [...topics].filter(t => !t.deleted);
-                if (searchTerm) { const lowerTerm = searchTerm.toLowerCase(); list = list.filter(t => t.title.toLowerCase().includes(lowerTerm) || (t.subarea && t.subarea.toLowerCase().includes(lowerTerm))); }
-                if (filterArea !== 'all') list = list.filter(t => t.area === filterArea);
-                list.sort((a, b) => { const getNextDate = (t) => t.reviews.find(r => !r.done)?.date || '9999-99-99'; const dateA = getNextDate(a); const dateB = getNextDate(b); const aDue = dateA <= todayStr; const bDue = dateB <= todayStr; if (aDue && !bDue) return -1; if (!aDue && bDue) return 1; return dateA.localeCompare(dateB); });
-                if (filterTime === 'today') return list.filter(t => t.reviews.some(r => !r.done && r.date <= todayStr));
+            const visibleTopics = useMemo(() => {
+                let list = topics.filter(t => !t.deleted);
+                if(searchTerm) list = list.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                if(filter === 'today') list = list.filter(t => t.reviews.some(r => !r.done && r.date <= getTodayStr()));
+                list.sort((a,b) => { const nextA = a.reviews.find(r => !r.done)?.date || '9999'; const nextB = b.reviews.find(r => !r.done)?.date || '9999'; return nextA.localeCompare(nextB); });
                 return list;
-            }, [topics, filterArea, filterTime, todayStr, searchTerm]);
+            }, [topics, searchTerm, filter]);
 
-            const currentSubareas = useMemo(() => { const selectedArea = AREAS.find(a => a.id === area); return selectedArea ? selectedArea.subareas : []; }, [area]);
+            const handleAddTopic = (data) => {
+                const schedule = generateSchedule(data.date, data.importance);
+                const newTopic = { id: generateId(), title: data.title, area: data.area, subarea: data.subarea, importance: data.importance, materialLink: data.link, studyDate: data.date, reviews: schedule, deleted: false, updatedAt: Date.now() };
+                setTopics([newTopic, ...topics]);
+            };
+
+            const triggerDelete = (id) => {
+                setDeleteConfirmId(id);
+            };
+
+            const confirmDelete = () => {
+                if (deleteConfirmId) {
+                    setTopics(prev => prev.map(t => t.id === deleteConfirmId ? {...t, deleted: true, updatedAt: Date.now()} : t));
+                    setDeleteConfirmId(null);
+                }
+            };
+
+            const handleAddLog = (log) => setLogs([log, ...logs]);
+            const handleDeleteLog = (id) => setLogs(prev => prev.map(l => l.id === id ? { ...l, deleted: true, updatedAt: Date.now() } : l));
+
+            const handleReviewSave = (data) => {
+                if(!reviewModalData) return;
+                const { topicId, reviewIdx } = reviewModalData;
+                setTopics(prev => prev.map(t => {
+                    if(t.id !== topicId) return t;
+                    const newRevs = [...t.reviews];
+                    newRevs[reviewIdx] = { ...newRevs[reviewIdx], done: true, correct: data.correct, total: data.total };
+                    if(reviewIdx + 1 < newRevs.length) {
+                        const acc = data.total > 0 ? data.correct/data.total : 0;
+                        const nextLoad = calculateNextLoad(t.importance, data.difficulty, newRevs[reviewIdx+1].type, acc);
+                        newRevs[reviewIdx+1].targetQ = nextLoad;
+                    }
+                    return { ...t, reviews: newRevs };
+                }));
+                setReviewModalData(null);
+            };
 
             return (
-                <div className="min-h-screen pb-12 transition-colors duration-300">
-                    <header className="bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 py-4 px-4 sticky top-0 z-40 transition-colors shadow-sm dark:shadow-none">
-                        <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-                            <div className="flex-1 w-full md:w-auto relative flex items-center justify-between md:justify-start">
-                                <div className="flex items-center gap-3 md:hidden">
-                                    <button onClick={() => setPomodoroOpen(true)} className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"><Timer size={18}/></button>
-                                    <button onClick={() => setSettingsOpen(true)} className={`p-2 rounded-lg border ${status === 'online' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-400 border-transparent'}`}><Settings size={18}/></button>
-                                </div>
-                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:static md:translate-x-0 md:translate-y-0">
-                                    <h1 className="text-xl font-bold flex items-center gap-2 text-slate-800 dark:text-white"><Activity className="text-emerald-500" /> ResiFlow</h1>
-                                </div>
-                                <div className="w-[88px] md:hidden"></div> 
-                            </div>
-                            <div className="w-full md:w-auto overflow-x-auto pb-1 md:pb-0 no-scrollbar">
-                                <div className="flex items-center justify-between md:justify-end gap-4 md:gap-2 bg-slate-100 dark:bg-zinc-800 p-1.5 rounded-xl">
-                                    <button onClick={() => setViewMode('list')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'list' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><List size={18}/> <span className="hidden md:inline">Lista</span></button>
-                                    <button onClick={() => setViewMode('calendar')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'calendar' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><CalendarIcon size={18}/> <span className="hidden md:inline">Cal.</span></button>
-                                    <button onClick={() => setViewMode('diary')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'diary' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><Notebook size={18}/> <span className="hidden md:inline">Diário</span></button>
-                                    <button onClick={() => setViewMode('dashboard')} className={`flex-1 md:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition text-sm font-bold ${viewMode === 'dashboard' ? 'bg-white dark:bg-zinc-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}><BarChart3 size={18}/> <span className="hidden md:inline">Análise</span></button>
-                                </div>
-                            </div>
-                             <div className="hidden md:flex items-center gap-2">
-                                <button onClick={() => setPomodoroOpen(true)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition"><Timer size={20}/></button>
-                                <button onClick={() => setSettingsOpen(true)} className={`p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition ${status === 'online' ? 'text-blue-500' : 'text-slate-500'}`}><Settings size={20}/></button>
-                                <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition"><Moon size={20}/></button>
+                <div className="min-h-screen pb-24 md:pb-10 relative overflow-x-hidden">
+                    {/* Background */}
+                    <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+                        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-400/10 dark:bg-blue-600/10 rounded-full blur-[100px]"></div>
+                        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-400/10 dark:bg-purple-600/10 rounded-full blur-[100px]"></div>
+                    </div>
+
+                    {/* Header */}
+                    <header className="fixed top-0 w-full z-40 glass border-b border-slate-200/50 dark:border-white/5 transition-all">
+                        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+                            <h1 className="text-xl font-bold flex items-center gap-2 tracking-tight text-slate-800 dark:text-white">
+                                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><Icons.Activity size={18}/></div> ResiFlow
+                            </h1>
+                            <div className="flex items-center gap-1">
+                                <button onClick={() => setPomodoroOpen(true)} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"><Icons.Timer size={20}/></button>
+                                <button onClick={() => setSettingsOpen(true)} className={`p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors ${status === 'online' ? 'text-blue-500' : 'text-slate-500'}`}><Icons.Settings size={20}/></button>
+                                <button onClick={() => setDarkMode(!darkMode)} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition-colors">{darkMode ? <Icons.Sun size={20}/> : <Icons.Moon size={20}/>}</button>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-                        {viewMode === 'diary' ? ( <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} /> ) : 
-                         viewMode === 'dashboard' ? ( <DashboardView topics={topics} /> ) : (
-                            <>
-                                {viewMode === 'list' && (
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-3 text-slate-400 pointer-events-none" size={18} />
-                                        <input type="text" placeholder="Buscar por assunto ou subárea..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
-                                    </div>
-                                )}
+                    {/* Main Content */}
+                    <main className="max-w-3xl mx-auto px-4 mt-24">
+                        {/* Mobile Bottom Nav */}
+                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 pb-safe z-50 flex justify-around py-3 px-2">
+                            {[{id:'list',i:Icons.Home},{id:'calendar',i:Icons.Calendar},{id:'dashboard',i:Icons.PieChart},{id:'diary',i:Icons.Notebook}].map(item => (
+                                <button key={item.id} onClick={() => setView(item.id)} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400'}`}>
+                                    <item.i size={22} strokeWidth={view === item.id ? 2.5 : 2}/>
+                                </button>
+                            ))}
+                        </nav>
 
-                                <section className="bg-white dark:bg-zinc-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-zinc-800 transition-colors">
-                                    <div className="flex items-center justify-between mb-6">
-                                        <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2"><Plus size={16} className="text-blue-500"/> Novo Conteúdo Teórico</h2>
+                        {/* FAB */}
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 md:translate-x-0 md:static md:mb-6 z-[55]">
+                             <button onClick={() => setModalAddOpen(true)} className="w-14 h-14 md:w-full md:h-12 md:rounded-xl rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"><Icons.Plus size={24}/><span className="hidden md:inline font-bold">Novo Tópico</span></button>
+                        </div>
+
+                        {/* Desktop Tabs */}
+                        <div className="hidden md:flex gap-2 mb-6 p-1 bg-slate-100 dark:bg-zinc-900/50 rounded-xl w-fit backdrop-blur-sm">
+                            {[{id:'list',l:'Lista',i:Icons.List},{id:'calendar',l:'Calendário',i:Icons.Calendar},{id:'diary',l:'Diário',i:Icons.Notebook},{id:'dashboard',l:'Análise',i:Icons.PieChart}].map(tab => (
+                                <button key={tab.id} onClick={() => setView(tab.id)} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all ${view === tab.id ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}><tab.i size={16}/> {tab.l}</button>
+                            ))}
+                        </div>
+
+                        <div className="animate-fade-in">
+                            {view === 'dashboard' ? ( <BentoDashboard topics={topics} /> ) : 
+                             view === 'calendar' ? ( <CalendarView topics={topics} onOpenReview={(tid, idx) => { const t=topics.find(x=>x.id===tid); setReviewModalData({topicId:tid,reviewIdx:idx,title:t.title,label:t.reviews[idx].label,target:t.reviews[idx].targetQ}) }} /> ) : 
+                             view === 'diary' ? ( <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} /> ) : (
+                                <>
+                                    <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                                        <div className="relative flex-1"><Icons.Search className="absolute left-3 top-3 text-slate-400" size={18}/><input type="text" placeholder="Buscar assunto..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+                                        <button onClick={() => setFilter(filter === 'today' ? 'all' : 'today')} className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap ${filter === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-zinc-800'}`}>{filter === 'today' ? '📅 Hoje' : '📅 Todos'}</button>
                                     </div>
-                                    <form onSubmit={handleAdd}>
-                                        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                                            <div className="md:col-span-8"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Assunto</label><input type="text" placeholder="Ex: Síndrome Nefrótica" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={title} onChange={e => setTitle(e.target.value)} /></div>
-                                            <div className="md:col-span-4"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Data Aula</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white dark:[color-scheme:dark] appearance-none h-12" value={date} onChange={e => setDate(e.target.value)} /></div>
-                                            <div className="md:col-span-12"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Link do Material (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white placeholder-slate-400 h-12" value={link} onChange={e => setLink(e.target.value)} /></div>
-                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Área</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.filter(a => a.id !== 'all').map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
-                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Subárea</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{currentSubareas.map(s => <option key={s} value={s}>{s}</option>)}</select></div>
-                                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1.5 block ml-1">Prioridade</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white h-12" value={importance} onChange={e => setImportance(e.target.value)}>{IMPORTANCE_LEVELS.map(i => <option key={i.id} value={i.id}>{i.label}</option>)}</select></div>
-                                            <div className="md:col-span-3 flex items-end"><button type="submit" className="h-12 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition flex items-center justify-center shadow-lg shadow-blue-600/20">Adicionar</button></div>
-                                        </div>
-                                    </form>
-                                </section>
-                                {viewMode === 'list' && (<div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"><button onClick={() => setFilterTime(filterTime === 'all' ? 'today' : 'all')} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterTime === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-zinc-800 hover:border-blue-300'}`}>{filterTime === 'today' ? '📅 Apenas Hoje' : '📅 Mostrar Tudo'}</button><div className="w-px bg-slate-200 dark:bg-zinc-800 mx-1"></div>{AREAS.map(a => <button key={a.id} onClick={() => toggleFilterArea(a.id)} className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold border transition ${filterArea === a.id ? `${a.color} shadow-sm` : 'bg-white dark:bg-zinc-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-zinc-800 opacity-70 hover:opacity-100'}`}>{a.name}</button>)}</div>)}
-                                <section className="space-y-4">{viewMode === 'calendar' ? ( <CalendarView topics={topics} onOpenReview={openReview} /> ) : ( <> {sortedTopics.length === 0 ? ( <div className="text-center py-12 text-slate-400 dark:text-slate-600"><BookOpen className="mx-auto mb-2 opacity-50" size={32} /><p>Nenhum tema encontrado com estes filtros.</p></div> ) : ( sortedTopics.map(topic => ( <TopicCard key={topic.id} topic={topic} onOpenReview={openReview} onDelete={deleteTopic} /> )) )} </> )}</section>
-                            </>
-                        )}
+                                    {visibleTopics.length === 0 ? (
+                                        <div className="flex flex-col items-center justify-center py-20 text-center opacity-60"><div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700"><Icons.BookOpen size={32}/></div><h3 className="font-bold text-slate-700 dark:text-slate-300">Nada por aqui</h3><p className="text-sm text-slate-500">Adicione um novo tópico para começar.</p></div>
+                                    ) : (
+                                        visibleTopics.map(t => ( <TopicCard key={t.id} topic={t} onOpenReview={(tid, idx) => { const r = t.reviews[idx]; setReviewModalData({ topicId: tid, reviewIdx: idx, title: t.title, label: r.label, target: r.targetQ }); }} onDelete={triggerDelete} /> ))
+                                    )}
+                                </>
+                            )}
+                        </div>
                     </main>
-                    <ModalReview isOpen={modalOpen} onClose={() => setModalOpen(false)} task={selectedTask} onSave={completeReview} />
+
+                    <AddTopicModal isOpen={modalAddOpen} onClose={() => setModalAddOpen(false)} onSave={handleAddTopic} />
                     <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} topics={topics} logs={logs} setTopics={setTopics} setLogs={setLogs} syncKey={syncKey} setSyncKey={setSyncKey} status={status} />
                     <PomodoroTimer isOpen={pomodoroOpen} onClose={() => setPomodoroOpen(false)} />
+                    
+                    {/* Delete Confirmation Modal */}
+                    {deleteConfirmId && (
+                        <ModalWrapper isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Confirmar Exclusão">
+                            <div className="p-6">
+                                <div className="flex flex-col items-center text-center mb-6">
+                                    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-500 mb-4">
+                                        <Icons.AlertTriangle size={32}/>
+                                    </div>
+                                    <h4 className="font-bold text-lg text-slate-800 dark:text-white">Tem certeza?</h4>
+                                    <p className="text-sm text-slate-500 mt-2">Você está prestes a excluir este tópico e todo o seu histórico de revisões. Esta ação não pode ser desfeita.</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 font-bold rounded-xl">Cancelar</button>
+                                    <button onClick={confirmDelete} className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-lg shadow-red-500/30">Sim, Excluir</button>
+                                </div>
+                            </div>
+                        </ModalWrapper>
+                    )}
+
+                    {reviewModalData && (
+                        <ModalWrapper isOpen={!!reviewModalData} onClose={() => setReviewModalData(null)} title={reviewModalData.title}>
+                                <div className="p-6">
+                                <div className="text-xs text-slate-500 uppercase font-bold mb-4">{reviewModalData.label}</div>
+                                <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); handleReviewSave({ correct: +fd.get('c'), total: +fd.get('t'), difficulty: fd.get('d') }); }} className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div><label className="text-xs font-bold text-slate-400">Acertos</label><input autoFocus name="c" type="number" className="w-full text-center text-2xl font-bold py-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl outline-none border border-transparent focus:border-emerald-500" required/></div>
+                                        <div><label className="text-xs font-bold text-slate-400">Total</label><input name="t" type="number" className="w-full text-center text-2xl font-bold py-3 bg-slate-50 dark:bg-zinc-800 text-slate-600 dark:text-white rounded-xl outline-none border border-transparent focus:border-blue-500" required defaultValue={reviewModalData.target}/></div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-slate-400 block mb-2">Dificuldade</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <label className="cursor-pointer"><input type="radio" name="d" value="easy" className="peer hidden"/><div className="py-2 text-center rounded-lg border border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-500 peer-checked:bg-emerald-500 peer-checked:text-white peer-checked:border-emerald-500">Fácil</div></label>
+                                            <label className="cursor-pointer"><input type="radio" name="d" value="medium" className="peer hidden" defaultChecked/><div className="py-2 text-center rounded-lg border border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-500 peer-checked:bg-amber-500 peer-checked:text-white peer-checked:border-amber-500">Médio</div></label>
+                                            <label className="cursor-pointer"><input type="radio" name="d" value="hard" className="peer hidden"/><div className="py-2 text-center rounded-lg border border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-500 peer-checked:bg-red-500 peer-checked:text-white peer-checked:border-red-500">Difícil</div></label>
+                                        </div>
+                                    </div>
+                                    <button className="w-full py-3 bg-slate-900 dark:bg-white dark:text-black text-white font-bold rounded-xl mt-2">Concluir Revisão</button>
+                                </form>
+                                </div>
+                        </ModalWrapper>
+                    )}
                 </div>
             );
         }
+
         const root = ReactDOM.createRoot(document.getElementById('root'));
         root.render(<App />);
     </script>

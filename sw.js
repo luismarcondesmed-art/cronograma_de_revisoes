@@ -1,80 +1,93 @@
-// Nome do Cache (mude a versão se atualizar o app para forçar atualização nos clientes)
-const CACHE_NAME = 'resiflow-v2-cache';
+// sw.js — versão definitiva 2025 (iOS-proof)
+const CACHE_NAME = 'resiflow-v10'; // Mantive v10 para garantir a atualização
 
-// Lista de arquivos e bibliotecas para cachear IMEDIATAMENTE
-const URLS_TO_CACHE = [
+const ESSENTIAL_URLS = [
   './',
   './index.html',
   './manifest.json',
-  // Bibliotecas Pesadas (React, Babel, Tailwind)
-  'https://unpkg.com/react@18/umd/react.production.min.js',
-  'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
-  'https://unpkg.com/@babel/standalone/babel.min.js', // O vilão de 3MB que será domado
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/lucide@latest',
-  // Fontes
-  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap'
+  './icon.svg'
 ];
 
-// Instalação: Baixa tudo que é crítico
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Service Worker: Cacheando arquivos estáticos');
-        return cache.addAll(URLS_TO_CACHE);
-      })
-  );
-});
+// URLs externas que exigem CORS (como React com crossorigin)
+// Separamos para garantir que o cache armazene a resposta com cabeçalhos CORS corretos
+const EXTERNAL_LIBS = [
+  'https://cdn.tailwindcss.com',
+  'https://unpkg.com/lucide@latest',
+  'https://unpkg.com/react@18/umd/react.production.min.js',
+  'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js',
+  'https://unpkg.com/@babel/standalone/babel.min.js',
+  'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js'
+];
 
-// Ativação: Limpa caches antigos
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            console.log('Service Worker: Limpando cache antigo', cache);
-            return caches.delete(cache);
-          }
-        })
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(async cache => {
+      // 1. Cache de arquivos locais (sempre seguro com addAll)
+      await cache.addAll(ESSENTIAL_URLS);
+      
+      // 2. Cache de libs externas com modo 'cors' EXPLICITO
+      // Isso corrige o bug do Safari onde scripts <script crossorigin> falham se o cache for opaco (no-cors)
+      const externalFetches = EXTERNAL_LIBS.map(url => 
+        fetch(url, { mode: 'cors' })
+          .then(res => {
+            if (res.ok) return cache.put(url, res);
+            console.warn('Falha ao cachear lib externa:', url);
+          })
+          .catch(err => console.warn('Erro rede lib externa:', err))
       );
-    })
+      
+      await Promise.all(externalFetches);
+    }).then(() => self.skipWaiting())
   );
 });
 
-// Interceptação: Serve do cache primeiro, depois tenta rede (Cache First Strategy)
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Se achou no cache, retorna instantaneamente
-        if (response) {
-          return response;
-        }
-        
-        // Se não, busca na rede
-        return fetch(event.request).then(
-          function(response) {
-            // Verifica se a resposta é válida
-            if(!response || response.status !== 200 || response.type !== 'basic' && !event.request.url.startsWith('http')) {
-              return response;
-            }
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys => Promise.all(
+      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+    )).then(() => self.clients.claim())
+  );
+});
 
-            // Clona a resposta para salvar no cache para a próxima vez
-            var responseToCache = response.clone();
+self.addEventListener('fetch', e => {
+  const url = e.request.url;
 
-            caches.open(CACHE_NAME)
-              .then(function(cache) {
-                // Apenas cacheia requisições GET http/https
-                if(event.request.url.startsWith('http')) {
-                    cache.put(event.request, responseToCache);
-                }
-              });
+  // HTML / Navegação -> Network First
+  if (e.request.mode === 'navigate' || e.request.destination === 'document') {
+    e.respondWith(
+      fetch(e.request)
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
-            return response;
-          }
-        );
+  // Libs Externas -> Stale-While-Revalidate
+  if (EXTERNAL_LIBS.some(lib => url.startsWith(lib))) {
+    e.respondWith(
+      caches.match(e.request).then(cached => {
+        // Se tem no cache, retorna e atualiza em background
+        const networkFetch = fetch(e.request).then(res => {
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, res.clone()));
+          return res;
+        });
+        return cached || networkFetch;
       })
+    );
+    return;
+  }
+
+  // Todo o resto -> Cache First
+  e.respondWith(
+    caches.match(e.request).then(res => 
+      res || fetch(e.request).then(netRes => {
+        if (netRes && netRes.status === 200 && (url.startsWith('http') || url.startsWith('https'))) {
+          caches.open(CACHE_NAME).then(cache => cache.put(e.request, netRes.clone()));
+        }
+        return netRes;
+      })
+    )
   );
 });

@@ -411,20 +411,6 @@
         const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
             const [tempKey, setTempKey] = useState(syncKey);
             useEffect(() => setTempKey(syncKey), [syncKey]);
-            
-            const requestNotificationPermission = async () => {
-                if (!("Notification" in window)) {
-                    alert("Este navegador não suporta notificações.");
-                    return;
-                }
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                    new Notification("Notificações Ativadas", { body: "Você receberá lembretes das suas revisões!", icon: "icon.svg" });
-                } else {
-                    alert("Permissão negada. Verifique as configurações do navegador.");
-                }
-            };
-
             const handleExport = () => {
                 const dataStr = JSON.stringify({ topics, logs }, null, 2);
                 const blob = new Blob([dataStr], { type: "application/json" });
@@ -458,14 +444,6 @@
                                 <div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado e Sincronizando' : 'Desconectado'}</span></div>
                             </div>
                         </div>
-                        
-                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
-                            <button onClick={requestNotificationPermission} className="w-full flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200">
-                                <span className="flex items-center gap-2"><Icons.Bell size={16}/> Ativar Notificações</span>
-                                <span className="text-blue-500 text-xs">Configurar</span>
-                            </button>
-                        </div>
-
                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                             <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><Icons.FileJson size={16}/> Backup Local</h4>
                             <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-white dark:bg-zinc-700 hover:bg-slate-100 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-600"><Icons.Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Icons.Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div>
@@ -938,7 +916,10 @@
                     <div className="absolute top-5 right-4 pointer-events-none text-slate-300 dark:text-zinc-600">{expanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}</div>
                 </div>
             );
-        }, (prev, next) => prev.topic.updatedAt === next.topic.updatedAt);
+        }, (prev, next) => 
+            prev.topic.id === next.topic.id && 
+            prev.topic.updatedAt === next.topic.updatedAt
+        );
 
         const AreaDetailView = ({ areaId, onBack, topics }) => {
             const area = AREAS.find(a => a.id === areaId);
@@ -1138,6 +1119,30 @@
 
             const triggerDelete = (id) => { setDeleteConfirmId(id); };
 
+            // Otimização de Performance: Funções de callback estáveis para evitar re-renders desnecessários
+            const handleOpenReview = useCallback((topicId, reviewIdx) => {
+                // Usa callback funcional para obter o estado mais recente de 'topics' sem recriar a função
+                setTopics(currentTopics => {
+                    const topic = currentTopics.find(t => t.id === topicId);
+                    if (topic) {
+                        const review = topic.reviews[reviewIdx];
+                        // Side-effect: setReviewModalData (ok em event handler)
+                        setReviewModalData({
+                            topicId,
+                            reviewIdx,
+                            title: topic.title,
+                            label: review.label,
+                            target: review.targetQ
+                        });
+                    }
+                    return currentTopics; // Não altera o estado, apenas lê
+                });
+            }, []); // Sem dependências, função estável
+
+            const handleDelete = useCallback((id) => {
+                setDeleteConfirmId(id);
+            }, []);
+
             const confirmDelete = () => {
                 if (deleteConfirmId) {
                     vibrate(VIBRATE_PATTERNS.tick);
@@ -1170,7 +1175,7 @@
                         existingNotifs.push({ date: nextDate, title: t.title, type: newRevs[reviewIdx+1].label });
                         localStorage.setItem('resiflow_notifications', JSON.stringify(existingNotifs));
                     }
-                    return { ...t, reviews: newRevs };
+                    return { ...t, reviews: newRevs, updatedAt: Date.now() }; // Importante: atualizar updatedAt
                 }));
                 setReviewModalData(null);
             };
@@ -1261,7 +1266,14 @@
                                     {visibleTopics.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-60"><div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700"><Icons.BookOpen size={32}/></div><h3 className="font-bold text-slate-700 dark:text-slate-300">Nada por aqui</h3><p className="text-sm text-slate-500">Adicione um novo tópico para começar.</p></div>
                                     ) : (
-                                        visibleTopics.map(t => ( <TopicCard key={t.id} topic={t} onOpenReview={(tid, idx) => { const r = t.reviews[idx]; setReviewModalData({ topicId: tid, reviewIdx: idx, title: t.title, label: r.label, target: r.targetQ }); }} onDelete={triggerDelete} /> ))
+                                        visibleTopics.map(t => ( 
+                                            <TopicCard 
+                                                key={t.id} 
+                                                topic={t} 
+                                                onOpenReview={handleOpenReview} 
+                                                onDelete={handleDelete} 
+                                            /> 
+                                        ))
                                     )}
                                 </>
                             )}

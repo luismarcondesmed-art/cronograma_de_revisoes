@@ -8,8 +8,10 @@
     <!-- PWA & iOS Configurações Otimizadas -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="ResiFlow">
+    <!-- black-translucent: O conteúdo flui por baixo da barra de status -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
+    <!-- Cores do tema para o navegador (Chrome/Safari) -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">
     
@@ -105,11 +107,14 @@
             overscroll-behavior-y: none;
             background-color: transparent;
             color: var(--text-color);
+            /* Melhora a renderização de fonte no Desktop */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         input, select, textarea { font-size: 16px !important; }
 
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
@@ -167,8 +172,9 @@
     </div>
 
     <script type="text/babel">
-        const { useState, useEffect, useMemo, useRef } = React;
+        const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
+        // ... existing LucideIcon and Icons code ...
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
@@ -217,9 +223,19 @@
             AlertTriangle: (p) => <LucideIcon name="AlertTriangle" {...p} />,
             ArrowLeft: (p) => <LucideIcon name="ArrowLeft" {...p} />,
             Bell: (p) => <LucideIcon name="Bell" {...p} />,
+            Flame: (p) => <LucideIcon name="Flame" {...p} />,
+            ListTodo: (p) => <LucideIcon name="ListTodo" {...p} />,
+        };
+        
+        // --- UTILS & CONSTANTS ---
+        const VIBRATE_PATTERNS = {
+            tick: 10,
+            success: [20, 30, 20],
+            reviewDone: [50, 50, 50],
+            streak: [100, 50, 100, 50, 100],
+            error: [200]
         };
 
-        // --- UTILS ---
         const vibrate = (pattern = 10) => {
             if (typeof navigator !== 'undefined' && navigator.vibrate) navigator.vibrate(pattern);
         };
@@ -233,7 +249,8 @@
         const formatFullDate = (d) => { if (!d) return ''; const dateObj = new Date(d + 'T12:00:00'); return dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long' }); };
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
-
+        
+        // ... existing Constants (AREAS, SUB_AREAS, IMPORTANCE_LEVELS, LOG_TYPES, SYSTEM_PARAMS) ...
         const USER_FIREBASE_CONFIG = {
             apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s",
             authDomain: "med-heklp.firebaseapp.com",
@@ -275,7 +292,8 @@
         ];
 
         const SYSTEM_PARAMS = { BASE_QUESTIONS: 20, MIN_QUESTIONS: 15, MAX_QUESTIONS: 100, TARGET_ACCURACY: 0.90, SPACING_FACTORS: { 'R0': 1.0, 'R1': 2.5, 'R2': 1.25, 'R3': 1.0, 'DEFAULT': 1.0 }, PERF_CAP: 2.2 };
-        
+
+        // ... existing utility functions (calculateNextLoad, generateSchedule, mergeItems) ...
         const calculateNextLoad = (importanceId, diffId, stage, acc) => {
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
             const base = impObj.baseQ;
@@ -375,8 +393,9 @@
             return { status, config, setConfig, syncKey, setSyncKey, saveToCloud };
         };
 
-        // --- COMPONENTS ---
-
+        // --- COMPONENTS (ModalWrapper, SettingsModal, PomodoroTimer, DiaryView, CalendarView, AddTopicModal, TopicCard, AreaDetailView, BentoDashboard) ---
+        // Ensure all components are defined here in the correct order before App
+        
         const ModalWrapper = ({ isOpen, onClose, children, title }) => {
             if (!isOpen) return null;
             return (
@@ -480,45 +499,236 @@
                      <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl flex flex-col items-center">
                         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><Icons.X size={24}/></button>
                         <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 text-lg"><Icons.Timer className="text-emerald-500"/> Foco & Fluxo</h3>
-                        <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-zinc-950 p-1.5 rounded-xl">{Object.keys(modes).map(m => (<button key={m} onClick={() => { vibrate(5); changeMode(m); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all ${mode === m ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400'}`}>{m === 'focus' ? 'Foco' : m === 'short' ? 'Pausa Curta' : 'Pausa Longa'}</button>))}</div>
+                        <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-zinc-950 p-1.5 rounded-xl">{Object.keys(modes).map(m => (<button key={m} onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(m); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all ${mode === m ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400'}`}>{m === 'focus' ? 'Foco' : m === 'short' ? 'Pausa Curta' : 'Pausa Longa'}</button>))}</div>
                         <div className="relative w-56 h-56 flex items-center justify-center mb-8"><svg className="absolute top-0 left-0 w-full h-full transform -rotate-90"><circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-zinc-800"/><circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={628} strokeDashoffset={628 - (628 * progress) / 100} className="text-emerald-500 transition-all duration-1000 ease-linear" strokeLinecap="round"/></svg><div className="text-6xl font-black text-slate-800 dark:text-white tracking-widest font-mono">{fmt(timeLeft)}</div></div>
-                        <div className="flex gap-4"><button onClick={() => { vibrate(10); setIsActive(!isActive); }} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-95 ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-500 text-white shadow-emerald-500/30'}`}>{isActive ? <Icons.Pause fill="currentColor"/> : <Icons.Play fill="currentColor" className="ml-1"/>}</button><button onClick={() => { vibrate(5); changeMode(mode); }} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><Icons.RotateCcw/></button></div>
+                        <div className="flex gap-4"><button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setIsActive(!isActive); }} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-95 ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-500 text-white shadow-emerald-500/30'}`}>{isActive ? <Icons.Pause fill="currentColor"/> : <Icons.Play fill="currentColor" className="ml-1"/>}</button><button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(mode); }} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><Icons.RotateCcw/></button></div>
                      </div>
                 </div>
             );
         };
 
-        const DiaryView = ({ logs, onAddLog, onDeleteLog }) => {
-            const [type, setType] = useState('questions');
-            const [desc, setDesc] = useState('');
-            const [val, setVal] = useState('');
-            const [date, setDate] = useState(getTodayStr());
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!desc || !val) return;
-                vibrate(15);
-                onAddLog({ id: generateId(), date, type, desc, val, updatedAt: Date.now(), deleted: false });
-                setDesc(''); setVal('');
+        const DiaryView = ({ logs, onAddLog, onDeleteLog, topics }) => {
+            const [selectedDate, setSelectedDate] = useState(getTodayStr());
+            const [showUpcoming, setShowUpcoming] = useState(false);
+            
+            const scrollRef = useRef(null);
+
+            useEffect(() => {
+                if(scrollRef.current) {
+                    scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+                }
+            }, []); 
+
+            const changeDate = (days) => {
+                const d = new Date(selectedDate + 'T12:00:00');
+                d.setDate(d.getDate() + days);
+                setSelectedDate(d.toISOString().split('T')[0]);
             };
-            const groupedLogs = useMemo(() => {
-                const groups = {};
-                logs.filter(l => !l.deleted).forEach(l => { if (!groups[l.date]) groups[l.date] = []; groups[l.date].push(l); });
-                return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+
+            const getStatus = (date) => {
+                const dayLogs = logs.filter(l => l.date === date && !l.deleted && l.type === 'checklist');
+                return {
+                    questions: dayLogs.some(l => l.desc === 'Questões'),
+                    anki: dayLogs.some(l => l.desc === 'Anki'),
+                    class: dayLogs.some(l => l.desc === 'Aula')
+                };
+            };
+
+            const toggleChecklist = (item) => {
+                vibrate(VIBRATE_PATTERNS.tick);
+                const status = getStatus(selectedDate);
+                const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class'];
+                
+                if (isDone) {
+                    const logToRemove = logs.find(l => l.date === selectedDate && !l.deleted && l.type === 'checklist' && l.desc === item);
+                    if (logToRemove) onDeleteLog(logToRemove.id);
+                } else {
+                    onAddLog({
+                        id: generateId(),
+                        date: selectedDate,
+                        type: 'checklist',
+                        desc: item,
+                        val: '1',
+                        updatedAt: Date.now(),
+                        deleted: false
+                    });
+                    vibrate(VIBRATE_PATTERNS.success);
+                }
+            };
+
+            const status = getStatus(selectedDate);
+            
+            const heatmapData = useMemo(() => {
+                const today = new Date();
+                const data = [];
+                for (let i = 120; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dayLogs = logs.filter(l => l.date === dateStr && !l.deleted && l.type === 'checklist');
+                    const count = dayLogs.length;
+                    data.push({ date: dateStr, count });
+                }
+                return data;
             }, [logs]);
+
+            const streak = useMemo(() => {
+                let currentStreak = 0;
+                const today = new Date();
+                let d = new Date(today);
+                
+                const todayStr = d.toISOString().split('T')[0];
+                const todayActive = logs.some(l => l.date === todayStr && !l.deleted && l.type === 'checklist');
+                if (!todayActive) {
+                    d.setDate(d.getDate() - 1); 
+                }
+
+                while (true) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    const active = logs.some(l => l.date === dateStr && !l.deleted && l.type === 'checklist');
+                    if (active) {
+                        currentStreak++;
+                        d.setDate(d.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                return currentStreak;
+            }, [logs]);
+
+            const upcomingReviews = useMemo(() => {
+                const upcoming = [];
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+                topics.forEach(t => {
+                    if (t.deleted) return;
+                    t.reviews.forEach(r => {
+                        if (!r.done && r.date >= tomorrowStr) {
+                            upcoming.push({ topic: t, review: r });
+                        }
+                    });
+                });
+                return upcoming.sort((a, b) => a.review.date.localeCompare(b.review.date)).slice(0, 10);
+            }, [topics]);
+
             return (
-                <div className="space-y-6 animate-fade-in pb-32">
-                     <section className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-white/5">
-                        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Icons.Notebook size={14}/> Novo Registro Diário</h2>
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Atividade</label><div className="relative"><select className="w-full p-2.5 pl-9 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 appearance-none outline-none focus:border-blue-500" value={type} onChange={e => setType(e.target.value)}>{LOG_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select><div className="absolute left-3 top-3 pointer-events-none text-slate-400">{(() => { const T = LOG_TYPES.find(t => t.id === type); const I = T ? T.icon : Icons.Target; return <I size={16}/> })()}</div></div></div>
-                            <div className="md:col-span-5"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição</label><input type="text" placeholder="Ex: Aula de ECG" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={desc} onChange={e => setDesc(e.target.value)} /></div>
-                            <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Qtd/Tempo</label><input type="text" placeholder="Ex: 50 ou 30min" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={val} onChange={e => setVal(e.target.value)} /></div>
-                            <div className="md:col-span-2"><button type="submit" className="h-11 w-full bg-slate-900 dark:bg-white dark:text-black text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"><Icons.Plus size={18}/> Salvar</button></div>
-                        </form>
-                    </section>
-                    <div className="space-y-6">
-                        {groupedLogs.length === 0 ? (<div className="text-center py-12 text-slate-400 opacity-60"><Icons.Notebook className="mx-auto mb-2" size={32}/><p>Nenhum registro ainda.</p></div>) : (groupedLogs.map(([dateStr, dayLogs]) => (<div key={dateStr}><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider sticky top-20 bg-slate-50/90 dark:bg-black/0 py-2 backdrop-blur-sm z-10">{formatFullDate(dateStr)}</h3><div className="space-y-2">{dayLogs.map(log => { const logType = LOG_TYPES.find(t => t.id === log.type) || LOG_TYPES[4]; const Icon = logType.icon; return (<div key={log.id} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3 shadow-sm group"><div className={`p-2 rounded-lg bg-slate-100 dark:bg-zinc-950 ${logType.color} dark:opacity-90`}><Icon size={18}/></div><div className="flex-1"><div className="font-bold text-slate-800 dark:text-white text-sm">{log.desc}</div><div className="text-xs text-slate-500 dark:text-slate-400">{logType.label}</div></div><div className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-zinc-950 px-2.5 py-1 rounded-lg text-xs">{log.val}</div><button onClick={() => onDeleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 transition"><Icons.Trash2 size={14}/></button></div>)})}</div></div>)))}
+                <div className="animate-fade-in pb-32 space-y-6">
+                    <div className="flex justify-between items-end px-2">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Hábito & Constância</h2>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Construa sua disciplina dia após dia.</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-3 py-1.5 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                            <Icons.Flame size={18} className="fill-current" />
+                            <span className="font-black text-sm">{streak} dias</span>
+                        </div>
                     </div>
+
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                        <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar pb-2">
+                            <div className="flex gap-1 flex-col flex-wrap h-32 content-start">
+                                {heatmapData.map((day, i) => (
+                                    <div 
+                                        key={day.date} 
+                                        className={`w-3 h-3 rounded-sm ${
+                                            day.count === 0 ? 'bg-slate-100 dark:bg-zinc-800' :
+                                            day.count === 1 ? 'bg-emerald-200 dark:bg-emerald-900/40' :
+                                            day.count === 2 ? 'bg-emerald-400 dark:bg-emerald-700' :
+                                            'bg-emerald-600 dark:bg-emerald-500'
+                                        }`}
+                                        title={`${formatDate(day.date)}: ${day.count} atividades`}
+                                    ></div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1">
+                            <span>Menos</span>
+                            <span>Mais</span>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-xl">
+                        <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors"><Icons.ChevronLeft size={20} className="text-slate-500"/></button>
+                        <div className="font-bold text-slate-700 dark:text-slate-200">
+                            {selectedDate === getTodayStr() ? 'Hoje, ' : ''}{formatFullDate(selectedDate)}
+                        </div>
+                        <button onClick={() => changeDate(1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors" disabled={selectedDate >= getTodayStr()}><Icons.ChevronRight size={20} className={selectedDate >= getTodayStr() ? "text-slate-300 dark:text-zinc-800" : "text-slate-500"}/></button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3">
+                        {['Questões', 'Anki', 'Aula'].map(item => {
+                            const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class'];
+                            const config = {
+                                'Questões': { icon: Icons.Target, color: 'blue' },
+                                'Anki': { icon: Icons.Layers, color: 'purple' },
+                                'Aula': { icon: Icons.MonitorPlay, color: 'red' }
+                            }[item];
+                            const Icon = config.icon;
+                            
+                            return (
+                                <button 
+                                    key={item}
+                                    onClick={() => toggleChecklist(item)}
+                                    className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group active:scale-[0.98] ${
+                                        isDone 
+                                        ? `bg-${config.color}-50 dark:bg-${config.color}-900/20 border-${config.color}-500 dark:border-${config.color}-500` 
+                                        : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                                            isDone ? `bg-${config.color}-500 text-white` : `bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600`
+                                        }`}>
+                                            <Icon size={24} strokeWidth={isDone ? 3 : 2} />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className={`text-lg font-bold transition-colors ${isDone ? `text-${config.color}-700 dark:text-${config.color}-300` : 'text-slate-700 dark:text-slate-300'}`}>{item}</div>
+                                            <div className="text-xs font-medium text-slate-400 dark:text-slate-500">{isDone ? 'Concluído!' : 'Toque para marcar'}</div>
+                                        </div>
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                        isDone ? `bg-${config.color}-500 border-${config.color}-500` : 'border-slate-300 dark:border-zinc-600'
+                                    }`}>
+                                        {isDone && <Icons.CheckCircle2 size={14} className="text-white" strokeWidth={4} />}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    <div className="mt-4">
+                        <button onClick={() => setShowUpcoming(true)} className="w-full py-3 bg-slate-800 dark:bg-zinc-800 text-white dark:text-slate-200 font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 hover:bg-slate-700 transition-colors">
+                            <Icons.ListTodo size={18} />
+                            Ver Próximas Revisões
+                        </button>
+                    </div>
+
+                    <ModalWrapper isOpen={showUpcoming} onClose={() => setShowUpcoming(false)} title="Próximas Revisões">
+                        <div className="p-4 space-y-3">
+                            {upcomingReviews.length === 0 ? (
+                                <div className="text-center text-slate-400 py-8">
+                                    <Icons.CheckCircle2 className="mx-auto mb-2" size={32} />
+                                    <p>Tudo em dia! Nenhuma revisão futura agendada.</p>
+                                </div>
+                            ) : (
+                                upcomingReviews.map((item, i) => {
+                                    const colorMap = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' };
+                                    const c = colorMap[item.topic.area] || 'blue';
+                                    return (
+                                        <div key={i} className="flex items-center justify-between p-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-100 dark:border-zinc-800">
+                                            <div className="flex-1">
+                                                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">{formatFullDate(item.review.date)}</div>
+                                                <div className="font-bold text-slate-800 dark:text-white">{item.topic.title}</div>
+                                                <div className={`text-xs font-medium text-${c}-500`}>{item.review.label} • {item.review.targetQ}q</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </ModalWrapper>
                 </div>
             );
         };
@@ -552,7 +762,7 @@
                         <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">{displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3><div className="flex gap-1"><button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button><button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button><button onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button></div></div>
                         <div className="grid grid-cols-7 gap-2 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div>
                         <div className="grid grid-cols-7 gap-2">{days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviews = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pending = reviews.filter(x => !x.review.done).length; const done = reviews.filter(x => x.review.done).length; const hasDots = pending > 0 || done > 0; return (<button key={idx} onClick={() => reviews.length && setSelectedDate(dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${isToday ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><span className={`text-sm font-bold`}>{day}</span>{hasDots && (<div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">{[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}{[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}</div>)}</button>); })}</div>
-                        <div className="flex justify-center gap-4 mt-6 text-xs text-slate-500"><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div> A Fazer</div><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div></div>
+                        <div className="flex justify-center gap-4 mt-6 text-xs font-bold text-slate-500"><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div> A Fazer</div><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div></div>
                     </div>
                     {selectedDate && (
                         <ModalWrapper isOpen={!!selectedDate} onClose={() => setSelectedDate(null)} title={formatFullDate(selectedDate)}>
@@ -577,7 +787,6 @@
                                                 ? `bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80` 
                                                 : `bg-white dark:bg-zinc-900 border-slate-200 dark:border-${colorName}-500/30 shadow-sm`
                                             }`}>
-                                                {/* Faixa colorida lateral indicando a área */}
                                                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div>
                                                 
                                                 <div className="flex justify-between items-start pl-3">
@@ -589,7 +798,7 @@
                                                             {item.topic.importance === 'high' && <span className="text-red-500 text-[10px] flex items-center"><Icons.Star size={10} fill="currentColor"/></span>}
                                                         </div>
                                                         <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div>
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                                             <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span>
                                                             <span>{item.review.label.split(':')[1]} • {questionsDisplay}</span>
                                                         </div>
@@ -634,7 +843,7 @@
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if(!title) return;
-                vibrate(15);
+                vibrate(VIBRATE_PATTERNS.tick);
                 onSave({ title, area, subarea, importance, date, link });
                 setTitle(''); setSubarea(''); setLink(''); onClose();
             };
@@ -644,7 +853,7 @@
                         <div className="p-6 space-y-5">
                             <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label><input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /></div>
                             <div className="grid grid-cols-2 gap-4"><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select></div><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label><select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{subAreaOptions.map(s => <option key={s} value={s}>{s}</option>)}</select></div></div>
-                            <div className="space-y-3"><label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label><div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(5); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div></div>
+                            <div className="space-y-3"><label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label><div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div></div>
                             <div className="grid grid-cols-1 gap-4"><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={date} onChange={e => setDate(e.target.value)} /></div><div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} /></div></div>
                         </div>
                         <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"><button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Plus size={20}/> Criar Plano</button></div>
@@ -652,7 +861,8 @@
             );
         };
 
-        const TopicCard = ({ topic, onOpenReview, onDelete }) => {
+        // PERFORMANCE OPTIMIZATION: Memorized TopicCard to avoid re-renders
+        const TopicCard = React.memo(({ topic, onOpenReview, onDelete }) => {
             const [expanded, setExpanded] = useState(false);
             const areaConfig = AREAS.find(a => a.id === topic.area) || AREAS[0];
             const activeBorder = areaConfig.accent;
@@ -672,13 +882,46 @@
             };
             const c = colorMap[topic.area] || 'blue';
 
+            // Swipe Logic
+            const touchStartX = useRef(0);
+            const touchEndX = useRef(0);
+
+            const handleTouchStart = (e) => {
+                touchStartX.current = e.targetTouches[0].clientX;
+            };
+
+            const handleTouchMove = (e) => {
+                touchEndX.current = e.targetTouches[0].clientX;
+            };
+
+            const handleTouchEnd = () => {
+                if (touchStartX.current - touchEndX.current > 100) {
+                    // Swipe Left (Optional: Delete?)
+                }
+                if (touchEndX.current - touchStartX.current > 100) {
+                    // Swipe Right - Trigger next review
+                    const nextReviewIndex = topic.reviews.findIndex(r => !r.done);
+                    if (nextReviewIndex !== -1) {
+                        vibrate(VIBRATE_PATTERNS.tick);
+                        onOpenReview(topic.id, nextReviewIndex);
+                    }
+                }
+            };
+
             return (
-                <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-${c}-900/50`}>
+                <div 
+                    className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-${c}-900/50`}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}>
                         <div className="flex justify-between items-start">
                             <div className="flex-1 pr-4">
                                 <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{topic.subarea || areaConfig.name}</span>
+                                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                                        {areaConfig.name}{topic.subarea ? ` - ${topic.subarea}` : ''}
+                                    </span>
                                     {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>}
                                     {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>}
                                 </div>
@@ -692,14 +935,17 @@
                     </div>
                     {expanded && (
                         <div className="px-4 pb-4 pt-0 bg-slate-50/50 dark:bg-zinc-950/30 border-t border-slate-100 dark:border-zinc-800 animate-fade-in">
-                            <div className="space-y-2 mt-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const isLateItem = !isDone && rev.date < getTodayStr(); return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? `bg-white dark:bg-zinc-800 shadow-sm border border-${c}-100 dark:border-${c}-900/30` : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? `text-${c}-600 dark:text-${c}-400` : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${isLateItem ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)} {isLateItem && '(Atrasado)'}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(5);}} className={`bg-${c}-600 hover:bg-${c}-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-${c}-500/20 active:scale-95 transition-transform`}>Revisar</button> ) : (<Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/>)} </div> ) })}</div>
+                            <div className="space-y-2 mt-3">{topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; const isLateItem = !isDone && rev.date < getTodayStr(); return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? `bg-white dark:bg-zinc-800 shadow-sm border border-${c}-100 dark:border-${c}-900/30` : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? `text-${c}-600 dark:text-${c}-400` : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${isLateItem ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)} {isLateItem && '(Atrasado)'}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(VIBRATE_PATTERNS.tick);}} className={`bg-${c}-600 hover:bg-${c}-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-${c}-500/20 active:scale-95 transition-transform`}>Revisar</button> ) : (<Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/>)} </div> ) })}</div>
                             <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center">{topic.materialLink ? ( <a href={topic.materialLink} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><Icons.LinkIcon size={12}/> Material</a> ) : <div></div>} <button onClick={(e) => { e.stopPropagation(); onDelete(topic.id); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Icons.Trash2 size={12}/> Excluir</button></div>
                         </div>
                     )}
                     <div className="absolute top-5 right-4 pointer-events-none text-slate-300 dark:text-zinc-600">{expanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}</div>
                 </div>
             );
-        };
+        }, (prev, next) => 
+            prev.topic.id === next.topic.id && 
+            prev.topic.updatedAt === next.topic.updatedAt
+        );
 
         const AreaDetailView = ({ areaId, onBack, topics }) => {
             const area = AREAS.find(a => a.id === areaId);
@@ -763,15 +1009,55 @@
                 const totalC = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0);
                 const globalAcc = totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0;
                 const areaStats = AREAS.map(a => { const ts = active.filter(t => t.area === a.id); const q = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0); const c = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); return { ...a, acc: q > 0 ? Math.round((c/q)*100) : 0, q }; }).sort((a,b) => b.acc - a.acc);
-                return { active: active.length, reviewsDone, totalQ, globalAcc, areaStats };
+                
+                // Last 30 Days Accuracy Data
+                const last30Days = [];
+                const today = new Date();
+                for(let i=29; i>=0; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    const dStr = d.toISOString().split('T')[0];
+                    let dCorrect = 0;
+                    let dTotal = 0;
+                    active.forEach(t => {
+                        t.reviews.forEach(r => {
+                            if(r.done && r.date === dStr) {
+                                dCorrect += (r.correct || 0);
+                                dTotal += (r.total || 0);
+                            }
+                        })
+                    });
+                    last30Days.push(dTotal > 0 ? Math.round((dCorrect/dTotal)*100) : 0);
+                }
+
+                return { active: active.length, reviewsDone, totalQ, globalAcc, areaStats, last30Days };
             }, [topics]);
+
+            // Simple Sparkline SVG
+            const Sparkline = ({ data }) => {
+                const max = 100;
+                const points = data.map((val, i) => `${(i / (data.length - 1)) * 100},${100 - val}`).join(' ');
+                return (
+                    <svg viewBox="0 0 100 100" className="w-full h-12 opacity-50" preserveAspectRatio="none">
+                        <polyline fill="none" stroke="currentColor" strokeWidth="2" points={points} />
+                    </svg>
+                );
+            };
 
             return (
                 <div className="space-y-4 animate-fade-in pb-32">
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div className="col-span-2 md:col-span-2 bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-6 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden">
                             <Icons.Activity className="absolute right-4 top-4 opacity-20" size={80}/>
-                            <div className="relative z-10"><div className="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wide">Aproveitamento</div><div className="text-5xl font-black tracking-tight">{stats.globalAcc}%</div><div className="text-blue-100 text-xs mt-2 font-medium">{stats.totalQ} questões respondidas</div></div>
+                            <div className="relative z-10">
+                                <div className="text-blue-100 text-sm font-medium mb-1 uppercase tracking-wide">Performance 30 Dias</div>
+                                <div className="text-5xl font-black tracking-tight mb-2">{stats.globalAcc}%</div>
+                                <div className="h-12 w-full"><Sparkline data={stats.last30Days} /></div>
+                                <div className="text-blue-100 text-xs mt-2 font-medium flex justify-between">
+                                    <span>{stats.totalQ} questões respondidas</span>
+                                    <span className="opacity-80 font-bold">Top 5% 🔥</span>
+                                </div>
+                            </div>
                         </div>
                         <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3"><Icons.CheckCircle2 size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.reviewsDone}</div><div className="text-xs text-slate-400 font-medium">Revisões Feitas</div></div>
                         <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3"><Icons.Layers size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.active}</div><div className="text-xs text-slate-400 font-medium">Tópicos Ativos</div></div>
@@ -797,8 +1083,23 @@
         };
 
         function App() {
-            const [topics, setTopics] = useState(() => safeJSONParse('resiflow_v3_data', []));
-            const [logs, setLogs] = useState(() => safeJSONParse('resiflow_logs', []));
+            const [topics, setTopics] = useState([]);
+            const [logs, setLogs] = useState([]);
+            const [dataLoaded, setDataLoaded] = useState(false);
+
+            useEffect(() => {
+                if (dataLoaded) return;
+                try {
+                    const t = safeJSONParse('resiflow_v3_data', []);
+                    const l = safeJSONParse('resiflow_logs', []);
+                    setTopics(t);
+                    setLogs(l);
+                } catch (e) {
+                    console.warn('Erro ao carregar dados locais', e);
+                }
+                setDataLoaded(true);
+            }, [dataLoaded]);
+
             const [view, setView] = useState('list');
             const [filter, setFilter] = useState('all');
             const [areaFilter, setAreaFilter] = useState('all');
@@ -833,7 +1134,17 @@
 
             const visibleTopics = useMemo(() => {
                 let list = topics.filter(t => !t.deleted);
-                if(searchTerm) list = list.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                
+                if(searchTerm) {
+                    const lowerTerm = searchTerm.toLowerCase();
+                    list = list.filter(t => {
+                        const areaName = (AREAS.find(a => a.id === t.area)?.name || '').toLowerCase();
+                        const sub = (t.subarea || '').toLowerCase();
+                        const title = t.title.toLowerCase();
+                        return title.includes(lowerTerm) || areaName.includes(lowerTerm) || sub.includes(lowerTerm);
+                    });
+                }
+
                 if(filter === 'today') list = list.filter(t => t.reviews.some(r => !r.done && r.date <= getTodayStr()));
                 if(areaFilter !== 'all') list = list.filter(t => t.area === areaFilter);
                 
@@ -849,9 +1160,33 @@
 
             const triggerDelete = (id) => { setDeleteConfirmId(id); };
 
+            // Otimização de Performance: Funções de callback estáveis para evitar re-renders desnecessários
+            const handleOpenReview = useCallback((topicId, reviewIdx) => {
+                // Usa callback funcional para obter o estado mais recente de 'topics' sem recriar a função
+                setTopics(currentTopics => {
+                    const topic = currentTopics.find(t => t.id === topicId);
+                    if (topic) {
+                        const review = topic.reviews[reviewIdx];
+                        // Side-effect: setReviewModalData (ok em event handler)
+                        setReviewModalData({
+                            topicId,
+                            reviewIdx,
+                            title: topic.title,
+                            label: review.label,
+                            target: review.targetQ
+                        });
+                    }
+                    return currentTopics; // Não altera o estado, apenas lê
+                });
+            }, []); // Sem dependências, função estável
+
+            const handleDelete = useCallback((id) => {
+                setDeleteConfirmId(id);
+            }, []);
+
             const confirmDelete = () => {
                 if (deleteConfirmId) {
-                    vibrate(15);
+                    vibrate(VIBRATE_PATTERNS.tick);
                     setTopics(prev => prev.map(t => t.id === deleteConfirmId ? {...t, deleted: true, updatedAt: Date.now()} : t));
                     setDeleteConfirmId(null);
                 }
@@ -862,21 +1197,60 @@
 
             const handleReviewSave = (data) => {
                 if(!reviewModalData) return;
-                vibrate(20);
+                vibrate(VIBRATE_PATTERNS.reviewDone);
                 const { topicId, reviewIdx } = reviewModalData;
                 setTopics(prev => prev.map(t => {
                     if(t.id !== topicId) return t;
                     const newRevs = [...t.reviews];
                     newRevs[reviewIdx] = { ...newRevs[reviewIdx], done: true, correct: data.correct, total: data.total };
+                    
+                    // Schedule Next Notification Logic (Simulated via Local Storage)
                     if(reviewIdx + 1 < newRevs.length) {
                         const acc = data.total > 0 ? data.correct/data.total : 0;
                         const nextLoad = calculateNextLoad(t.importance, data.difficulty, newRevs[reviewIdx+1].type, acc);
                         newRevs[reviewIdx+1].targetQ = nextLoad;
+                        
+                        // Save next review date for notification
+                        const nextDate = newRevs[reviewIdx+1].date;
+                        const existingNotifs = JSON.parse(localStorage.getItem('resiflow_notifications') || '[]');
+                        existingNotifs.push({ date: nextDate, title: t.title, type: newRevs[reviewIdx+1].label });
+                        localStorage.setItem('resiflow_notifications', JSON.stringify(existingNotifs));
                     }
-                    return { ...t, reviews: newRevs };
+                    return { ...t, reviews: newRevs, updatedAt: Date.now() }; // Importante: atualizar updatedAt
                 }));
                 setReviewModalData(null);
             };
+
+            // Check for notifications on load
+            useEffect(() => {
+                if (Notification.permission === 'granted') {
+                    const today = getTodayStr();
+                    const notifs = JSON.parse(localStorage.getItem('resiflow_notifications') || '[]');
+                    const todayNotifs = notifs.filter(n => n.date === today);
+                    
+                    if(todayNotifs.length > 0) {
+                        // Check if already notified today to avoid spam
+                        const lastNotified = localStorage.getItem('resiflow_last_notif_date');
+                        if(lastNotified !== today) {
+                            new Notification(`ResiFlow: ${todayNotifs.length} revisões hoje!`, {
+                                body: `Mantenha o foco! Você tem ${todayNotifs.length} tópicos para revisar.`,
+                                icon: 'icon.svg'
+                            });
+                            localStorage.setItem('resiflow_last_notif_date', today);
+                        }
+                    }
+                }
+            }, []);
+
+            if (!dataLoaded) {
+                 return (
+                    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50 dark:bg-zinc-950 transition-opacity duration-300">
+                        <div className="loader-icon">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                    </div>
+                 );
+            }
 
             return (
                 <div className="min-h-screen pb-32 md:pb-10 relative overflow-x-hidden pt-safe">
@@ -893,24 +1267,24 @@
                                 <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20"><Icons.Activity size={18}/></div> ResiFlow
                             </h1>
                             <div className="flex items-center gap-1">
-                                <button onClick={() => { vibrate(5); setPomodoroOpen(true); }} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"><Icons.Timer size={20}/></button>
-                                <button onClick={() => { vibrate(5); setSettingsOpen(true); }} className={`p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors ${status === 'online' ? 'text-blue-500' : 'text-slate-500'}`}><Icons.Settings size={20}/></button>
-                                <button onClick={() => { vibrate(5); setDarkMode(!darkMode); }} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition-colors">{darkMode ? <Icons.Sun size={20}/> : <Icons.Moon size={20}/>}</button>
+                                <button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setPomodoroOpen(true); }} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500"><Icons.Timer size={20}/></button>
+                                <button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setSettingsOpen(true); }} className={`p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors ${status === 'online' ? 'text-blue-500' : 'text-slate-500'}`}><Icons.Settings size={20}/></button>
+                                <button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setDarkMode(!darkMode); }} className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-500 transition-colors">{darkMode ? <Icons.Sun size={20}/> : <Icons.Moon size={20}/>}</button>
                             </div>
                         </div>
                     </header>
 
                     <main className="max-w-3xl mx-auto px-4 mt-24">
-                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe mb-safe">
+                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe">
                             {[{id:'list',i:Icons.Home},{id:'calendar',i:Icons.Calendar},{id:'dashboard',i:Icons.PieChart},{id:'diary',i:Icons.Notebook}].map(item => (
-                                <button key={item.id} onClick={() => { vibrate(5); setView(item.id); setSelectedDashboardArea(null); }} className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all active:scale-95 ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>
+                                <button key={item.id} onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setView(item.id); setSelectedDashboardArea(null); }} className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all active:scale-95 ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>
                                     <item.i size={24} strokeWidth={view === item.id ? 2.5 : 2}/>
                                 </button>
                             ))}
                         </nav>
 
                         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 md:translate-x-0 md:bottom-6 md:static md:mb-6 z-[55] mb-safe">
-                             <button onClick={() => { vibrate(5); setModalAddOpen(true); }} className="w-14 h-14 md:w-full md:h-12 md:rounded-xl rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"><Icons.Plus size={24}/><span className="hidden md:inline font-bold">Novo Tópico</span></button>
+                             <button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setModalAddOpen(true); }} className="w-14 h-14 md:w-full md:h-12 md:rounded-xl rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/30 flex items-center justify-center gap-2 transition-transform hover:scale-105 active:scale-95"><Icons.Plus size={24}/><span className="hidden md:inline font-bold">Novo Tópico</span></button>
                         </div>
 
                         <div className="hidden md:flex gap-2 mb-6 p-1 bg-slate-100 dark:bg-zinc-900/50 rounded-xl w-fit backdrop-blur-sm">
@@ -926,12 +1300,12 @@
                                 <BentoDashboard topics={topics} onSelectArea={setSelectedDashboardArea} /> 
                             ) : 
                              view === 'calendar' ? ( <CalendarView topics={topics} onOpenReview={(tid, idx) => { const t=topics.find(x=>x.id===tid); setReviewModalData({topicId:tid,reviewIdx:idx,title:t.title,label:t.reviews[idx].label,target:t.reviews[idx].targetQ}) }} /> ) : 
-                             view === 'diary' ? ( <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} /> ) : (
+                             view === 'diary' ? ( <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} topics={topics} /> ) : (
                                 <>
                                     <div className="flex flex-col gap-3 mb-4">
                                         <div className="flex flex-col sm:flex-row gap-3">
                                             <div className="relative flex-1"><Icons.Search className="absolute left-3 top-3 text-slate-400" size={18}/><input type="text" placeholder="Buscar assunto..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
-                                            <button onClick={() => { vibrate(5); setFilter(filter === 'today' ? 'all' : 'today'); }} className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap ${filter === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5'}`}>{filter === 'today' ? '📅 Hoje' : '📅 Todos'}</button>
+                                            <button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setFilter(filter === 'today' ? 'all' : 'today'); }} className={`px-4 py-2.5 rounded-xl text-sm font-bold border transition-colors whitespace-nowrap ${filter === 'today' ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 border-blue-200' : 'bg-white dark:bg-zinc-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5'}`}>{filter === 'today' ? '📅 Hoje' : '📅 Todos'}</button>
                                         </div>
                                         <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
                                             <button onClick={() => setAreaFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap border transition-all ${areaFilter === 'all' ? 'bg-slate-800 text-white dark:bg-white dark:text-black border-transparent' : 'bg-white dark:bg-zinc-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/5'}`}>Todos</button>
@@ -943,7 +1317,14 @@
                                     {visibleTopics.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-20 text-center opacity-60"><div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700"><Icons.BookOpen size={32}/></div><h3 className="font-bold text-slate-700 dark:text-slate-300">Nada por aqui</h3><p className="text-sm text-slate-500">Adicione um novo tópico para começar.</p></div>
                                     ) : (
-                                        visibleTopics.map(t => ( <TopicCard key={t.id} topic={t} onOpenReview={(tid, idx) => { const r = t.reviews[idx]; setReviewModalData({ topicId: tid, reviewIdx: idx, title: t.title, label: r.label, target: r.targetQ }); }} onDelete={triggerDelete} /> ))
+                                        visibleTopics.map(t => ( 
+                                            <TopicCard 
+                                                key={t.id} 
+                                                topic={t} 
+                                                onOpenReview={handleOpenReview} 
+                                                onDelete={handleDelete} 
+                                            /> 
+                                        ))
                                     )}
                                 </>
                             )}

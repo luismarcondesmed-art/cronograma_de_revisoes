@@ -411,6 +411,20 @@
         const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
             const [tempKey, setTempKey] = useState(syncKey);
             useEffect(() => setTempKey(syncKey), [syncKey]);
+            
+            const requestNotificationPermission = async () => {
+                if (!("Notification" in window)) {
+                    alert("Este navegador não suporta notificações.");
+                    return;
+                }
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                    new Notification("Notificações Ativadas", { body: "Você receberá lembretes das suas revisões!", icon: "icon.svg" });
+                } else {
+                    alert("Permissão negada. Verifique as configurações do navegador.");
+                }
+            };
+
             const handleExport = () => {
                 const dataStr = JSON.stringify({ topics, logs }, null, 2);
                 const blob = new Blob([dataStr], { type: "application/json" });
@@ -444,6 +458,14 @@
                                 <div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado e Sincronizando' : 'Desconectado'}</span></div>
                             </div>
                         </div>
+                        
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
+                            <button onClick={requestNotificationPermission} className="w-full flex items-center justify-between text-sm font-bold text-slate-700 dark:text-slate-200">
+                                <span className="flex items-center gap-2"><Icons.Bell size={16}/> Ativar Notificações</span>
+                                <span className="text-blue-500 text-xs">Configurar</span>
+                            </button>
+                        </div>
+
                         <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700">
                             <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><Icons.FileJson size={16}/> Backup Local</h4>
                             <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-white dark:bg-zinc-700 hover:bg-slate-100 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-600"><Icons.Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Icons.Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div>
@@ -761,6 +783,7 @@
                                                 ? `bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80` 
                                                 : `bg-white dark:bg-zinc-900 border-slate-200 dark:border-${colorName}-500/30 shadow-sm`
                                             }`}>
+                                                {/* Faixa colorida lateral indicando a área */}
                                                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div>
                                                 
                                                 <div className="flex justify-between items-start pl-3">
@@ -1224,7 +1247,7 @@
                     </header>
 
                     <main className="max-w-3xl mx-auto px-4 mt-24">
-                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe mb-safe">
+                        <nav className="md:hidden fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe">
                             {[{id:'list',i:Icons.Home},{id:'calendar',i:Icons.Calendar},{id:'dashboard',i:Icons.PieChart},{id:'diary',i:Icons.Notebook}].map(item => (
                                 <button key={item.id} onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setView(item.id); setSelectedDashboardArea(null); }} className={`flex flex-col items-center gap-1 p-3 rounded-2xl transition-all active:scale-95 ${view === item.id ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}>
                                     <item.i size={24} strokeWidth={view === item.id ? 2.5 : 2}/>

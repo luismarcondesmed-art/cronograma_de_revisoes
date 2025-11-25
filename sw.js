@@ -1,5 +1,6 @@
 // sw.js — versão definitiva 2025 (iOS-proof)
-const CACHE_NAME = 'resiflow-v10'; // Mantive v10 para garantir a atualização
+// BUMP VERSION: v11 (Alterar isto força a atualização imediata em todos os dispositivos)
+const CACHE_NAME = 'resiflow-v11'; 
 
 const ESSENTIAL_URLS = [
   './',
@@ -9,7 +10,6 @@ const ESSENTIAL_URLS = [
 ];
 
 // URLs externas que exigem CORS (como React com crossorigin)
-// Separamos para garantir que o cache armazene a resposta com cabeçalhos CORS corretos
 const EXTERNAL_LIBS = [
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
@@ -25,18 +25,18 @@ const EXTERNAL_LIBS = [
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(async cache => {
-      // 1. Cache de arquivos locais (sempre seguro com addAll)
+      // 1. Cache de arquivos locais
       await cache.addAll(ESSENTIAL_URLS);
       
-      // 2. Cache de libs externas com modo 'cors' EXPLICITO
-      // Isso corrige o bug do Safari onde scripts <script crossorigin> falham se o cache for opaco (no-cors)
+      // 2. Cache de libs externas com tratamento de erros individual
+      // Se uma falhar, não quebra a instalação inteira
       const externalFetches = EXTERNAL_LIBS.map(url => 
         fetch(url, { mode: 'cors' })
           .then(res => {
             if (res.ok) return cache.put(url, res);
-            console.warn('Falha ao cachear lib externa:', url);
+            console.warn('Falha ao cachear lib externa (ignorado):', url);
           })
-          .catch(err => console.warn('Erro rede lib externa:', err))
+          .catch(err => console.warn('Erro rede lib externa (ignorado):', err))
       );
       
       await Promise.all(externalFetches);
@@ -48,17 +48,27 @@ self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    )).then(() => self.clients.claim())
+    )).then(() => {
+      // Força o novo SW a assumir o controlo imediatamente
+      return self.clients.claim();
+    })
   );
 });
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // HTML / Navegação -> Network First
+  // HTML / Navegação -> Network First (COM FORÇA DE RELOAD)
+  // Isto garante que nunca servimos um index.html antigo/quebrado
   if (e.request.mode === 'navigate' || e.request.destination === 'document') {
     e.respondWith(
-      fetch(e.request)
+      fetch(e.request, { cache: 'reload' })
+        .then(res => {
+           // Opcional: Atualizar a cache com a nova versão bem-sucedida
+           const resClone = res.clone();
+           caches.open(CACHE_NAME).then(cache => cache.put(e.request, resClone));
+           return res;
+        })
         .catch(() => caches.match('./index.html'))
     );
     return;
@@ -68,11 +78,13 @@ self.addEventListener('fetch', e => {
   if (EXTERNAL_LIBS.some(lib => url.startsWith(lib))) {
     e.respondWith(
       caches.match(e.request).then(cached => {
-        // Se tem no cache, retorna e atualiza em background
-        const networkFetch = fetch(e.request).then(res => {
-          caches.open(CACHE_NAME).then(cache => cache.put(e.request, res.clone()));
+        const networkFetch = fetch(e.request, { mode: 'cors' }).then(res => {
+          if(res.ok) {
+            caches.open(CACHE_NAME).then(cache => cache.put(e.request, res.clone()));
+          }
           return res;
-        });
+        }).catch(() => null); // Falha silenciosa em background
+
         return cached || networkFetch;
       })
     );

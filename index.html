@@ -174,6 +174,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
+        // ... existing LucideIcon and Icons code ...
         const LucideIcon = ({ name, size = 24, className = "" }) => {
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) return <span style={{width: size, height: size, display: 'inline-block'}} />;
@@ -225,7 +226,7 @@
             Flame: (p) => <LucideIcon name="Flame" {...p} />,
             ListTodo: (p) => <LucideIcon name="ListTodo" {...p} />,
         };
-
+        
         // --- UTILS & CONSTANTS ---
         const VIBRATE_PATTERNS = {
             tick: 10,
@@ -248,7 +249,8 @@
         const formatFullDate = (d) => { if (!d) return ''; const dateObj = new Date(d + 'T12:00:00'); return dateObj.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'long' }); };
         const generateId = () => (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
         const safeJSONParse = (key, fallback) => { try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; } catch (e) { return fallback; } };
-
+        
+        // ... existing Constants (AREAS, SUB_AREAS, IMPORTANCE_LEVELS, LOG_TYPES, SYSTEM_PARAMS) ...
         const USER_FIREBASE_CONFIG = {
             apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s",
             authDomain: "med-heklp.firebaseapp.com",
@@ -290,7 +292,8 @@
         ];
 
         const SYSTEM_PARAMS = { BASE_QUESTIONS: 20, MIN_QUESTIONS: 15, MAX_QUESTIONS: 100, TARGET_ACCURACY: 0.90, SPACING_FACTORS: { 'R0': 1.0, 'R1': 2.5, 'R2': 1.25, 'R3': 1.0, 'DEFAULT': 1.0 }, PERF_CAP: 2.2 };
-        
+
+        // ... existing utility functions (calculateNextLoad, generateSchedule, mergeItems) ...
         const calculateNextLoad = (importanceId, diffId, stage, acc) => {
             const impObj = IMPORTANCE_LEVELS.find(i => i.id === importanceId) || IMPORTANCE_LEVELS[1];
             const base = impObj.baseQ;
@@ -390,8 +393,9 @@
             return { status, config, setConfig, syncKey, setSyncKey, saveToCloud };
         };
 
-        // --- COMPONENTS ---
-
+        // --- COMPONENTS (ModalWrapper, SettingsModal, PomodoroTimer, DiaryView, CalendarView, AddTopicModal, TopicCard, AreaDetailView, BentoDashboard) ---
+        // Ensure all components are defined here in the correct order before App
+        
         const ModalWrapper = ({ isOpen, onClose, children, title }) => {
             if (!isOpen) return null;
             return (
@@ -783,7 +787,6 @@
                                                 ? `bg-white/50 dark:bg-zinc-900/50 border-slate-200 dark:border-zinc-800 opacity-80` 
                                                 : `bg-white dark:bg-zinc-900 border-slate-200 dark:border-${colorName}-500/30 shadow-sm`
                                             }`}>
-                                                {/* Faixa colorida lateral indicando a área */}
                                                 <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div>
                                                 
                                                 <div className="flex justify-between items-start pl-3">
@@ -1080,8 +1083,23 @@
         };
 
         function App() {
-            const [topics, setTopics] = useState(() => safeJSONParse('resiflow_v3_data', []));
-            const [logs, setLogs] = useState(() => safeJSONParse('resiflow_logs', []));
+            const [topics, setTopics] = useState([]);
+            const [logs, setLogs] = useState([]);
+            const [dataLoaded, setDataLoaded] = useState(false);
+
+            useEffect(() => {
+                if (dataLoaded) return;
+                try {
+                    const t = safeJSONParse('resiflow_v3_data', []);
+                    const l = safeJSONParse('resiflow_logs', []);
+                    setTopics(t);
+                    setLogs(l);
+                } catch (e) {
+                    console.warn('Erro ao carregar dados locais', e);
+                }
+                setDataLoaded(true);
+            }, [dataLoaded]);
+
             const [view, setView] = useState('list');
             const [filter, setFilter] = useState('all');
             const [areaFilter, setAreaFilter] = useState('all');
@@ -1223,6 +1241,16 @@
                     }
                 }
             }, []);
+
+            if (!dataLoaded) {
+                 return (
+                    <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50 dark:bg-zinc-950 transition-opacity duration-300">
+                        <div className="loader-icon">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        </div>
+                    </div>
+                 );
+            }
 
             return (
                 <div className="min-h-screen pb-32 md:pb-10 relative overflow-x-hidden pt-safe">

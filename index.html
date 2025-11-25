@@ -8,8 +8,10 @@
     <!-- PWA & iOS Configurações Otimizadas -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="ResiFlow">
+    <!-- black-translucent: O conteúdo flui por baixo da barra de status -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
+    <!-- Cores do tema para o navegador (Chrome/Safari) -->
     <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f8fafc">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b">
     
@@ -105,11 +107,14 @@
             overscroll-behavior-y: none;
             background-color: transparent;
             color: var(--text-color);
+            /* Melhora a renderização de fonte no Desktop */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         input, select, textarea { font-size: 16px !important; }
 
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
@@ -217,6 +222,7 @@
             AlertTriangle: (p) => <LucideIcon name="AlertTriangle" {...p} />,
             ArrowLeft: (p) => <LucideIcon name="ArrowLeft" {...p} />,
             Bell: (p) => <LucideIcon name="Bell" {...p} />,
+            Flame: (p) => <LucideIcon name="Flame" {...p} />,
         };
 
         // --- UTILS ---
@@ -489,35 +495,188 @@
         };
 
         const DiaryView = ({ logs, onAddLog, onDeleteLog }) => {
-            const [type, setType] = useState('questions');
-            const [desc, setDesc] = useState('');
-            const [val, setVal] = useState('');
-            const [date, setDate] = useState(getTodayStr());
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!desc || !val) return;
-                vibrate(15);
-                onAddLog({ id: generateId(), date, type, desc, val, updatedAt: Date.now(), deleted: false });
-                setDesc(''); setVal('');
+            const [selectedDate, setSelectedDate] = useState(getTodayStr());
+            
+            // Ensure the ref is correctly used to scroll to the end
+            const scrollRef = useRef(null);
+
+            useEffect(() => {
+                if(scrollRef.current) {
+                    scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+                }
+            }, []); // Run once on mount
+
+            const changeDate = (days) => {
+                const d = new Date(selectedDate + 'T12:00:00');
+                d.setDate(d.getDate() + days);
+                setSelectedDate(d.toISOString().split('T')[0]);
             };
-            const groupedLogs = useMemo(() => {
-                const groups = {};
-                logs.filter(l => !l.deleted).forEach(l => { if (!groups[l.date]) groups[l.date] = []; groups[l.date].push(l); });
-                return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+
+            const getStatus = (date) => {
+                const dayLogs = logs.filter(l => l.date === date && !l.deleted && l.type === 'checklist');
+                return {
+                    questions: dayLogs.some(l => l.desc === 'Questões'),
+                    anki: dayLogs.some(l => l.desc === 'Anki'),
+                    class: dayLogs.some(l => l.desc === 'Aula')
+                };
+            };
+
+            const toggleChecklist = (item) => {
+                vibrate(5);
+                const status = getStatus(selectedDate);
+                const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class'];
+                
+                if (isDone) {
+                    // Remove log
+                    const logToRemove = logs.find(l => l.date === selectedDate && !l.deleted && l.type === 'checklist' && l.desc === item);
+                    if (logToRemove) onDeleteLog(logToRemove.id);
+                } else {
+                    // Add log
+                    onAddLog({
+                        id: generateId(),
+                        date: selectedDate,
+                        type: 'checklist',
+                        desc: item,
+                        val: '1',
+                        updatedAt: Date.now(),
+                        deleted: false
+                    });
+                }
+            };
+
+            const status = getStatus(selectedDate);
+            
+            // Heatmap Data Generation (Last 4 months)
+            const heatmapData = useMemo(() => {
+                const today = new Date();
+                const data = [];
+                // Generate last 120 days
+                for (let i = 120; i >= 0; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const dayLogs = logs.filter(l => l.date === dateStr && !l.deleted && l.type === 'checklist');
+                    const count = dayLogs.length;
+                    data.push({ date: dateStr, count });
+                }
+                return data;
             }, [logs]);
+
+            // Calculate Streak
+            const streak = useMemo(() => {
+                let currentStreak = 0;
+                const today = new Date();
+                // Check yesterday first, or today if completed
+                let d = new Date(today);
+                
+                // Check if today has any activity
+                const todayStr = d.toISOString().split('T')[0];
+                const todayActive = logs.some(l => l.date === todayStr && !l.deleted && l.type === 'checklist');
+                if (!todayActive) {
+                    d.setDate(d.getDate() - 1); // Start checking from yesterday
+                }
+
+                while (true) {
+                    const dateStr = d.toISOString().split('T')[0];
+                    const active = logs.some(l => l.date === dateStr && !l.deleted && l.type === 'checklist');
+                    if (active) {
+                        currentStreak++;
+                        d.setDate(d.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                return currentStreak;
+            }, [logs]);
+
             return (
-                <div className="space-y-6 animate-fade-in pb-32">
-                     <section className="bg-white dark:bg-zinc-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-white/5">
-                        <h2 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2"><Icons.Notebook size={14}/> Novo Registro Diário</h2>
-                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-                            <div className="md:col-span-3"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Atividade</label><div className="relative"><select className="w-full p-2.5 pl-9 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 appearance-none outline-none focus:border-blue-500" value={type} onChange={e => setType(e.target.value)}>{LOG_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}</select><div className="absolute left-3 top-3 pointer-events-none text-slate-400">{(() => { const T = LOG_TYPES.find(t => t.id === type); const I = T ? T.icon : Icons.Target; return <I size={16}/> })()}</div></div></div>
-                            <div className="md:col-span-5"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição</label><input type="text" placeholder="Ex: Aula de ECG" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={desc} onChange={e => setDesc(e.target.value)} /></div>
-                            <div className="md:col-span-2"><label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Qtd/Tempo</label><input type="text" placeholder="Ex: 50 ou 30min" className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 text-sm dark:text-white h-11 outline-none focus:border-blue-500" value={val} onChange={e => setVal(e.target.value)} /></div>
-                            <div className="md:col-span-2"><button type="submit" className="h-11 w-full bg-slate-900 dark:bg-white dark:text-black text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"><Icons.Plus size={18}/> Salvar</button></div>
-                        </form>
-                    </section>
-                    <div className="space-y-6">
-                        {groupedLogs.length === 0 ? (<div className="text-center py-12 text-slate-400 opacity-60"><Icons.Notebook className="mx-auto mb-2" size={32}/><p>Nenhum registro ainda.</p></div>) : (groupedLogs.map(([dateStr, dayLogs]) => (<div key={dateStr}><h3 className="text-sm font-bold text-slate-400 dark:text-slate-500 mb-3 uppercase tracking-wider sticky top-20 bg-slate-50/90 dark:bg-black/0 py-2 backdrop-blur-sm z-10">{formatFullDate(dateStr)}</h3><div className="space-y-2">{dayLogs.map(log => { const logType = LOG_TYPES.find(t => t.id === log.type) || LOG_TYPES[4]; const Icon = logType.icon; return (<div key={log.id} className="bg-white dark:bg-zinc-900 p-3 rounded-xl border border-slate-200 dark:border-white/5 flex items-center gap-3 shadow-sm group"><div className={`p-2 rounded-lg bg-slate-100 dark:bg-zinc-950 ${logType.color} dark:opacity-90`}><Icon size={18}/></div><div className="flex-1"><div className="font-bold text-slate-800 dark:text-white text-sm">{log.desc}</div><div className="text-xs text-slate-500 dark:text-slate-400">{logType.label}</div></div><div className="font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-zinc-950 px-2.5 py-1 rounded-lg text-xs">{log.val}</div><button onClick={() => onDeleteLog(log.id)} className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-500 transition"><Icons.Trash2 size={14}/></button></div>)})}</div></div>)))}
+                <div className="animate-fade-in pb-32 space-y-6">
+                    {/* Header & Streak */}
+                    <div className="flex justify-between items-end px-2">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Hábito & Constância</h2>
+                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Construa sua disciplina dia após dia.</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 px-3 py-1.5 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                            <Icons.Flame size={18} className="fill-current" />
+                            <span className="font-black text-sm">{streak} dias</span>
+                        </div>
+                    </div>
+
+                    {/* Heatmap Scrollable */}
+                    <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
+                        {/* LTR scrolling wrapper */}
+                        <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar pb-2">
+                            <div className="flex gap-1 flex-col flex-wrap h-32 content-start">
+                                {heatmapData.map((day, i) => (
+                                    <div 
+                                        key={day.date} 
+                                        className={`w-3 h-3 rounded-sm ${
+                                            day.count === 0 ? 'bg-slate-100 dark:bg-zinc-800' :
+                                            day.count === 1 ? 'bg-emerald-200 dark:bg-emerald-900/40' :
+                                            day.count === 2 ? 'bg-emerald-400 dark:bg-emerald-700' :
+                                            'bg-emerald-600 dark:bg-emerald-500'
+                                        }`}
+                                        title={`${formatDate(day.date)}: ${day.count} atividades`}
+                                    ></div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1">
+                            <span>Menos</span>
+                            <span>Mais</span>
+                        </div>
+                    </div>
+
+                    {/* Date Navigation */}
+                    <div className="flex items-center justify-between bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-xl">
+                        <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors"><Icons.ChevronLeft size={20} className="text-slate-500"/></button>
+                        <div className="font-bold text-slate-700 dark:text-slate-200">
+                            {selectedDate === getTodayStr() ? 'Hoje, ' : ''}{formatFullDate(selectedDate)}
+                        </div>
+                        <button onClick={() => changeDate(1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors" disabled={selectedDate >= getTodayStr()}><Icons.ChevronRight size={20} className={selectedDate >= getTodayStr() ? "text-slate-300 dark:text-zinc-800" : "text-slate-500"}/></button>
+                    </div>
+
+                    {/* Checklist Cards */}
+                    <div className="grid grid-cols-1 gap-3">
+                        {['Questões', 'Anki', 'Aula'].map(item => {
+                            const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class'];
+                            const config = {
+                                'Questões': { icon: Icons.Target, color: 'blue' },
+                                'Anki': { icon: Icons.Layers, color: 'purple' },
+                                'Aula': { icon: Icons.MonitorPlay, color: 'red' }
+                            }[item];
+                            const Icon = config.icon;
+                            
+                            return (
+                                <button 
+                                    key={item}
+                                    onClick={() => toggleChecklist(item)}
+                                    className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group active:scale-[0.98] ${
+                                        isDone 
+                                        ? `bg-${config.color}-50 dark:bg-${config.color}-900/20 border-${config.color}-500 dark:border-${config.color}-500` 
+                                        : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                                            isDone ? `bg-${config.color}-500 text-white` : `bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600`
+                                        }`}>
+                                            <Icon size={24} strokeWidth={isDone ? 3 : 2} />
+                                        </div>
+                                        <div className="text-left">
+                                            <div className={`text-lg font-bold transition-colors ${isDone ? `text-${config.color}-700 dark:text-${config.color}-300` : 'text-slate-700 dark:text-slate-300'}`}>{item}</div>
+                                            <div className="text-xs font-medium text-slate-400 dark:text-slate-500">{isDone ? 'Concluído!' : 'Toque para marcar'}</div>
+                                        </div>
+                                    </div>
+                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                                        isDone ? `bg-${config.color}-500 border-${config.color}-500` : 'border-slate-300 dark:border-zinc-600'
+                                    }`}>
+                                        {isDone && <Icons.CheckCircle2 size={14} className="text-white" strokeWidth={4} />}
+                                    </div>
+                                </button>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -552,7 +711,7 @@
                         <div className="flex items-center justify-between mb-6"><h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">{displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3><div className="flex gap-1"><button onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button><button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button><button onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button></div></div>
                         <div className="grid grid-cols-7 gap-2 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div>
                         <div className="grid grid-cols-7 gap-2">{days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviews = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pending = reviews.filter(x => !x.review.done).length; const done = reviews.filter(x => x.review.done).length; const hasDots = pending > 0 || done > 0; return (<button key={idx} onClick={() => reviews.length && setSelectedDate(dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${isToday ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}><span className={`text-sm font-bold`}>{day}</span>{hasDots && (<div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">{[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}{[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${isToday ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}</div>)}</button>); })}</div>
-                        <div className="flex justify-center gap-4 mt-6 text-xs text-slate-500"><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div> A Fazer</div><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div></div>
+                        <div className="flex justify-center gap-4 mt-6 text-xs font-bold text-slate-500"><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-blue-500"></div> A Fazer</div><div className="flex items-center gap-1.5"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> Concluído</div></div>
                     </div>
                     {selectedDate && (
                         <ModalWrapper isOpen={!!selectedDate} onClose={() => setSelectedDate(null)} title={formatFullDate(selectedDate)}>
@@ -589,7 +748,7 @@
                                                             {item.topic.importance === 'high' && <span className="text-red-500 text-[10px] flex items-center"><Icons.Star size={10} fill="currentColor"/></span>}
                                                         </div>
                                                         <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div>
-                                                        <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                                        <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                                                             <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span>
                                                             <span>{item.review.label.split(':')[1]} • {questionsDisplay}</span>
                                                         </div>
@@ -678,7 +837,9 @@
                         <div className="flex justify-between items-start">
                             <div className="flex-1 pr-4">
                                 <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{topic.subarea || areaConfig.name}</span>
+                                    <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">
+                                        {areaConfig.name}{topic.subarea ? ` - ${topic.subarea}` : ''}
+                                    </span>
                                     {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>}
                                     {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>}
                                 </div>
@@ -833,7 +994,17 @@
 
             const visibleTopics = useMemo(() => {
                 let list = topics.filter(t => !t.deleted);
-                if(searchTerm) list = list.filter(t => t.title.toLowerCase().includes(searchTerm.toLowerCase()));
+                
+                if(searchTerm) {
+                    const lowerTerm = searchTerm.toLowerCase();
+                    list = list.filter(t => {
+                        const areaName = (AREAS.find(a => a.id === t.area)?.name || '').toLowerCase();
+                        const sub = (t.subarea || '').toLowerCase();
+                        const title = t.title.toLowerCase();
+                        return title.includes(lowerTerm) || areaName.includes(lowerTerm) || sub.includes(lowerTerm);
+                    });
+                }
+
                 if(filter === 'today') list = list.filter(t => t.reviews.some(r => !r.done && r.date <= getTodayStr()));
                 if(areaFilter !== 'all') list = list.filter(t => t.area === areaFilter);
                 

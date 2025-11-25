@@ -1,4 +1,4 @@
-// sw.js — versão definitiva 2025 (iOS-proof
+// sw.js — versão definitiva 2025 (iOS-proof)
 const CACHE_NAME = 'resiflow-v9'; // subiu pra v9 por causa das correções
 
 const ESSENTIAL_URLS = [
@@ -36,24 +36,28 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = e.request.url;
 
-  // HTML / navegação → sempre rede primeiro
+  // HTML / navegação → sempre rede primeiro (Network First)
+  // Isso garante que atualizações no index.html sejam vistas imediatamente
   if (e.request.mode === 'navigate' || url.endsWith('.html') || url === location.origin + '/') {
     e.respondWith(
-      fetch(e.request).catch(() => caches.match('./index.html'))
+      fetch(e.request)
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
 
   // Bibliotecas pesadas → Stale-While-Revalidate
+  // Usa o cache para velocidade, mas atualiza em segundo plano
   if (HEAVY_LIBS.some(lib => url.startsWith(lib))) {
     e.respondWith(
       caches.match(e.request)
-        .then(cached => cached || fetch(e.request)
-          .then(res => {
+        .then(cached => {
+          const networkFetch = fetch(e.request).then(res => {
             caches.open(CACHE_NAME).then(cache => cache.put(e.request, res.clone()));
             return res;
-          })
-        )
+          });
+          return cached || networkFetch;
+        })
     );
     return;
   }
@@ -63,12 +67,13 @@ self.addEventListener('fetch', e => {
     caches.match(e.request)
       .then(res => res || fetch(e.request)
         .then(netRes => {
-          if (netRes?.status === 200) {
+          if (netRes && netRes.status === 200) {
             caches.open(CACHE_NAME).then(cache => cache.put(e.request, netRes.clone()));
           }
           return netRes;
         })
-        .catch(() => caches.match('./index.html'))
+        // Se falhar (offline) e for uma requisição de imagem/asset, tenta o cache novamente ou retorna nada
+        .catch(() => caches.match(e.request)) 
       )
   );
 });

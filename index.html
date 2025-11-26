@@ -103,6 +103,9 @@
         const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
 
         // --- CONSTANTS & CONFIG ---
+        // FALLBACK CONFIG FOR GITHUB PAGES OR LOCALHOST
+        const USER_FIREBASE_CONFIG = { apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s", authDomain: "med-heklp.firebaseapp.com", projectId: "med-heklp", storageBucket: "med-heklp.firebasestorage.app", messagingSenderId: "675054342845", appId: "1:675054342845:web:91e53e21060a087123ddd4", measurementId: "G-BLWYTWFFTZ" };
+
         const AREAS = [ 
             { id: 'clinica', name: 'Clínica', full: 'Clínica Médica', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30', accent: 'border-blue-500 shadow-blue-500/10' }, 
             { id: 'cirurgia', name: 'Cirurgia', full: 'Cirurgia Geral', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border-red-200 dark:border-red-500/30', accent: 'border-red-500 shadow-red-500/10' }, 
@@ -155,17 +158,28 @@
             return ( <ToastContext.Provider value={{ showToast }}> {children} <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4"> {toasts.map(toast => ( <div key={toast.id} className={`p-4 rounded-2xl shadow-xl border-2 animate-bounce-in flex items-center gap-3 backdrop-blur-md ${ toast.type === 'error' ? 'bg-red-50/90 border-red-200 text-red-700 dark:bg-red-900/90 dark:text-white dark:border-red-800' : 'bg-white/90 border-white text-slate-800 dark:bg-zinc-800/90 dark:text-white dark:border-zinc-700' }`}> {toast.type === 'error' ? <Icons.AlertTriangle size={20}/> : <Icons.CheckCircle2 size={20} className="text-emerald-500"/>} <span className="text-sm font-bold">{toast.message}</span> </div> ))} </div> </ToastContext.Provider> );
         };
 
-        // --- HOOK: FIREBASE SYNC ---
+        // --- HOOK: FIREBASE SYNC (Robust with Fallback) ---
         const useSync = (topics, logs, simulations, setTopics, setLogs, setSimulations) => {
             const [status, setStatus] = useState('offline');
             const [user, setUser] = useState(null);
             const [syncKey, setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
             const [appId, setAppId] = useState('resiflow');
+            const [isFirebaseReady, setIsFirebaseReady] = useState(!!window.firebaseModules); 
             
             const dbRef = useRef(null);
             const stateRef = useRef({ topics, logs, simulations });
             
             useEffect(() => { stateRef.current = { topics, logs, simulations }; }, [topics, logs, simulations]);
+
+            useEffect(() => {
+                if (window.firebaseModules) {
+                    setIsFirebaseReady(true);
+                } else {
+                    const handleReady = () => setIsFirebaseReady(true);
+                    window.addEventListener('firebase-ready', handleReady);
+                    return () => window.removeEventListener('firebase-ready', handleReady);
+                }
+            }, []);
 
             const updateSyncKey = (key) => {
                 setSyncKey(key);
@@ -176,34 +190,63 @@
             };
 
             useEffect(() => {
-                if (!window.firebaseModules) return;
+                if (!isFirebaseReady || !window.firebaseModules) return;
+
                 const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore } = window.firebaseModules;
+                
                 try {
-                    const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-                    const aid = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
+                    // FALLBACK LOGIC HERE:
+                    const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : USER_FIREBASE_CONFIG;
+                    const aid = typeof __app_id !== 'undefined' ? __app_id : 'resiflow-app';
                     setAppId(aid);
+
                     if (fbConfig) {
-                        const app = initializeApp(fbConfig);
-                        const auth = getAuth(app);
-                        const db = getFirestore(app);
+                        let app;
+                        try {
+                            app = initializeApp(fbConfig);
+                        } catch(e) {
+                             // Ignore re-init error
+                        }
+                        
+                        const auth = getAuth();
+                        const db = getFirestore();
                         dbRef.current = db;
+
                         const initAuth = async () => {
                             try {
-                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { await signInWithCustomToken(auth, __initial_auth_token); } 
-                                else { await signInAnonymously(auth); }
-                            } catch (error) { console.error("Auth Error", error); setStatus('error'); }
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
+                                    await signInWithCustomToken(auth, __initial_auth_token); 
+                                } else { 
+                                    await signInAnonymously(auth); 
+                                }
+                            } catch (error) { 
+                                console.error("Auth Error", error); 
+                                setStatus('error'); 
+                            }
                         };
                         initAuth();
-                        const unsubscribe = onAuthStateChanged(auth, (u) => { setUser(u); });
+
+                        const unsubscribe = onAuthStateChanged(auth, (u) => {
+                            setUser(u);
+                        });
                         return () => unsubscribe();
                     }
-                } catch (e) { console.error("Firebase Init Error", e); setStatus('error'); }
-            }, []);
+                } catch (e) {
+                    console.error("Firebase Init Error", e);
+                    setStatus('error');
+                }
+            }, [isFirebaseReady]);
 
             useEffect(() => {
-                if (!user || !dbRef.current || !syncKey || !window.firebaseModules) { if(!syncKey && status !== 'error') setStatus('offline'); return; }
+                if (!user || !dbRef.current || !syncKey || !window.firebaseModules) {
+                    if(!syncKey && status !== 'error') setStatus('offline');
+                    return;
+                }
+
                 const { doc, onSnapshot } = window.firebaseModules;
+                // Public Path: artifacts/{appId}/public/data/{collection}/{docId}
                 const docRef = doc(dbRef.current, 'artifacts', appId, 'public', 'data', 'resiflow_sync', syncKey);
+                
                 setStatus('syncing');
                 const unsubscribe = onSnapshot(docRef, (s) => {
                     if (s.exists()) {
@@ -213,9 +256,13 @@
                         if (d.simulations) { const merged = mergeItems(stateRef.current.simulations, d.simulations); if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.simulations)) setSimulations(merged); }
                     }
                     setStatus('online');
-                }, (err) => { console.error("Sync Error", err); setStatus('error'); });
+                }, (err) => {
+                    console.error("Sync Error", err);
+                    setStatus('error');
+                });
+
                 return () => unsubscribe();
-            }, [user, syncKey, appId]);
+            }, [user, syncKey, appId, isFirebaseReady]);
 
             const saveToCloud = async (newTopics, newLogs, newSimulations) => {
                 if (!user || !dbRef.current || !syncKey) return;
@@ -223,12 +270,16 @@
                     const { doc, setDoc } = window.firebaseModules;
                     const docRef = doc(dbRef.current, 'artifacts', appId, 'public', 'data', 'resiflow_sync', syncKey);
                     await setDoc(docRef, { topics: newTopics, logs: newLogs, simulations: newSimulations, updatedAt: new Date().toISOString() }, { merge: true });
-                } catch (e) { console.error("Save Error", e); setStatus('error'); }
+                } catch (e) {
+                    console.error("Save Error", e);
+                    setStatus('error');
+                }
             };
+
             return { status, syncKey, setSyncKey: updateSyncKey, saveToCloud, appId, user };
         };
 
-        // --- COMPONENTS: UI ---
+        // --- COMPONENTS: MODALS & WIDGETS ---
         const ModalWrapper = ({ isOpen, onClose, children, title }) => { if (!isOpen) return null; return ( <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe"> <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div> <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0"> <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10"> <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3> <button aria-label="Fechar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button> </div> <div className="overflow-y-auto p-0">{children}</div> </div> </div> ); };
 
         const SettingsModal = ({ isOpen, onClose, topics, logs, simulations, setTopics, setLogs, setSimulations, syncKey, setSyncKey, status, appId, user }) => {
@@ -293,7 +344,6 @@
 
         const CalendarView = ({ topics, onOpenReview }) => { const [displayDate, setDisplayDate] = useState(new Date()); const [selectedDate, setSelectedDate] = useState(null); const currentMonth = displayDate.getMonth(); const currentYear = displayDate.getFullYear(); const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); const startDay = new Date(currentYear, currentMonth, 1).getDay(); const days = Array(startDay).fill(null).concat([...Array(daysInMonth).keys()].map(i => i + 1)); const prevMonth = () => setDisplayDate(new Date(currentYear, currentMonth - 1, 1)); const nextMonth = () => setDisplayDate(new Date(currentYear, currentMonth + 1, 1)); const goToday = () => setDisplayDate(new Date()); const getReviewsForDate = (dateStr) => { const list = []; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach((r, idx) => { if (r.date === dateStr) list.push({ topic: t, review: r, idx }); }); }); return list; }; return ( <div className="animate-fade-in pb-32 lg:pb-0 flex flex-col lg:flex-row gap-6 h-full"> <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm p-6 h-fit"> <div className="flex items-center justify-between mb-6"> <h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">{displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3> <div className="flex gap-1"> <button aria-label="Mês anterior" onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button> <button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button> <button aria-label="Próximo mês" onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button> </div> </div> <div className="grid grid-cols-7 gap-2 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div> <div className="grid grid-cols-7 gap-2"> {days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviews = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pending = reviews.filter(x => !x.review.done).length; const done = reviews.filter(x => x.review.done).length; const hasDots = pending > 0 || done > 0; return ( <button key={idx} onClick={() => setSelectedDate(selectedDate === dateStr ? null : dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${selectedDate === dateStr ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 z-10' : isToday ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}> <span className={`text-sm font-bold`}>{day}</span> {hasDots && (<div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">{[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}{[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}</div>)} </button> ); })} </div> </div> {selectedDate && ( <div className="flex-1 lg:max-w-md animate-fade-in"> <div className="bg-slate-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-slate-200 dark:border-white/5 h-full flex flex-col"> <h4 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2 mb-4"><Icons.CalendarCheck size={20} className="text-blue-500"/> {formatFullDate(selectedDate)}</h4> <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1"> {getReviewsForDate(selectedDate).length === 0 ? ( <div className="text-center text-slate-400 py-8 flex flex-col items-center justify-center h-40"> <Icons.Coffee size={32} className="mb-2 opacity-50"/> <p>Nada agendado para este dia.</p> </div> ) : ( getReviewsForDate(selectedDate).map((item, i) => { const areaInfo = AREAS.find(a => a.id === item.topic.area) || AREAS[0]; const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; const acc = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0; return ( <div key={i} className={`p-4 rounded-xl border relative overflow-hidden bg-white dark:bg-zinc-900 border-slate-200 dark:border-${c}-500/30 shadow-sm`}> <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div> <div className="flex justify-between items-start pl-3"> <div className="flex-1"> <div className="flex items-center gap-2 mb-1"> <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${areaInfo.color}`}>{areaInfo.name.toUpperCase()}</span> {item.topic.importance === 'high' && <span className="text-red-500 text-[10px] flex items-center"><Icons.Star size={10} fill="currentColor"/></span>} </div> <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div> <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"> <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span> <span>{item.review.label.split(':')[1]} • {item.review.done ? `${item.review.correct}/${item.review.total} acertos` : `Meta: ${item.review.targetQ}q`}</span> </div> </div> <div className="flex flex-col items-end gap-2"> {item.review.done ? (<><span className={`text-sm font-black ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</span></>) : (<button onClick={() => { onOpenReview(item.topic.id, item.idx); }} className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-blue-500/20 shadow-lg">Revisar</button>)} </div> </div> </div> ); }) )} </div> </div> </div> )} </div> ); };
 
-        // --- ANALYTICS DASHBOARD ---
         const AnalyticsFilterModal = ({ isOpen, onClose, area, subarea, setArea, setSubarea }) => {
             if (!isOpen) return null;
             return (

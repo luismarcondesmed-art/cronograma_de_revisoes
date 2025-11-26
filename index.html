@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR" class="antialiased">
 <head>
@@ -103,9 +104,6 @@
         const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
 
         // --- CONSTANTS & CONFIG ---
-        // FALLBACK CONFIG FOR GITHUB PAGES OR LOCALHOST
-        const USER_FIREBASE_CONFIG = { apiKey: "AIzaSyCvqp5HYUMnogWmwT0O1LFLOMsfqj9P83s", authDomain: "med-heklp.firebaseapp.com", projectId: "med-heklp", storageBucket: "med-heklp.firebasestorage.app", messagingSenderId: "675054342845", appId: "1:675054342845:web:91e53e21060a087123ddd4", measurementId: "G-BLWYTWFFTZ" };
-
         const AREAS = [ 
             { id: 'clinica', name: 'Clínica', full: 'Clínica Médica', color: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border-blue-200 dark:border-blue-500/30', accent: 'border-blue-500 shadow-blue-500/10' }, 
             { id: 'cirurgia', name: 'Cirurgia', full: 'Cirurgia Geral', color: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-300 border-red-200 dark:border-red-500/30', accent: 'border-red-500 shadow-red-500/10' }, 
@@ -133,9 +131,16 @@
         const mergeItems = (local, cloud) => { const map = new Map(); local.forEach(i => map.set(i.id, i)); cloud.forEach(c => { const l = map.get(c.id); if (!l || (c.updatedAt || 0) > (l.updatedAt || 0)) map.set(c.id, c); }); return Array.from(map.values()); };
 
         // --- COMPONENTS: ICONS ---
-        const LucideIcon = React.memo(({ name, size = 24, className = "" }) => {
+        // Robust Lucide Renderer that handles missing icons gracefully
+        const LucideIcon = ({ name, size = 24, className = "" }) => {
+            const [mounted, setMounted] = useState(false);
+            useEffect(() => setMounted(true), []);
+            
+            if (!mounted) return <span style={{width: size, height: size, display: 'inline-block'}} />;
+            
             const iconData = window.lucide && window.lucide.icons ? window.lucide.icons[name] : null;
             if (!iconData) {
+                // Fallback circle if icon missing
                 return (
                    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
                      <circle cx="12" cy="12" r="10"></circle>
@@ -146,9 +151,9 @@
                 { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className }, 
                 iconData.map((ele, i) => React.createElement(ele[0], { ...ele[1], key: i }))
             );
-        });
+        };
 
-        const Icons = { Target: (p)=><LucideIcon name="Target" {...p}/>, Calendar: (p)=><LucideIcon name="Calendar" {...p}/>, Plus: (p)=><LucideIcon name="Plus" {...p}/>, CheckCircle2: (p)=><LucideIcon name="CheckCircle2" {...p}/>, Clock: (p)=><LucideIcon name="Clock" {...p}/>, BookOpen: (p)=><LucideIcon name="BookOpen" {...p}/>, Star: (p)=><LucideIcon name="Star" {...p}/>, X: (p)=><LucideIcon name="X" {...p}/>, ChevronDown: (p)=><LucideIcon name="ChevronDown" {...p}/>, ChevronUp: (p)=><LucideIcon name="ChevronUp" {...p}/>, ChevronLeft: (p)=><LucideIcon name="ChevronLeft" {...p}/>, ChevronRight: (p)=><LucideIcon name="ChevronRight" {...p}/>, Activity: (p)=><LucideIcon name="Activity" {...p}/>, Moon: (p)=><LucideIcon name="Moon" {...p}/>, Sun: (p)=><LucideIcon name="Sun" {...p}/>, List: (p)=><LucideIcon name="List" {...p}/>, Trash2: (p)=><LucideIcon name="Trash2" {...p}/>, Cloud: (p)=><LucideIcon name="Cloud" {...p}/>, Save: (p)=><LucideIcon name="Save" {...p}/>, Download: (p)=><LucideIcon name="Download" {...p}/>, Upload: (p)=><LucideIcon name="Upload" {...p}/>, Settings: (p)=><LucideIcon name="Settings" {...p}/>, Timer: (p)=><LucideIcon name="Timer" {...p}/>, Play: (p)=><LucideIcon name="Play" {...p}/>, Pause: (p)=><LucideIcon name="Pause" {...p}/>, RotateCcw: (p)=><LucideIcon name="RotateCcw" {...p}/>, Layers: (p)=><LucideIcon name="Layers" {...p}/>, Notebook: (p)=><LucideIcon name="Notebook" {...p}/>, Search: (p)=><LucideIcon name="Search" {...p}/>, BarChart3: (p)=><LucideIcon name="BarChart3" {...p}/>, LinkIcon: (p)=><LucideIcon name="Link" {...p}/>, FileJson: (p)=><LucideIcon name="FileJson" {...p}/>, Lock: (p)=><LucideIcon name="Lock" {...p}/>, Home: (p)=><LucideIcon name="Home" {...p}/>, PieChart: (p)=><LucideIcon name="PieChart" {...p}/>, MoreHorizontal: (p)=><LucideIcon name="MoreHorizontal" {...p}/>, PenTool: (p)=><LucideIcon name="PenTool" {...p}/>, MonitorPlay: (p)=><LucideIcon name="MonitorPlay" {...p}/>, AlertTriangle: (p)=><LucideIcon name="AlertTriangle" {...p}/>, ArrowLeft: (p)=><LucideIcon name="ArrowLeft" {...p}/>, Bell: (p)=><LucideIcon name="Bell" {...p}/>, Flame: (p)=><LucideIcon name="Flame" {...p}/>, ListTodo: (p)=><LucideIcon name="ListTodo" {...p}/>, LogOut: (p)=><LucideIcon name="LogOut" {...p}/>, Coffee: (p)=><LucideIcon name="Coffee" {...p}/>, Edit: (p)=><LucideIcon name="PenTool" {...p}/>, Filter: (p)=><LucideIcon name="Filter" {...p}/>, CalendarCheck: (p)=><LucideIcon name="CalendarCheck" {...p}/>, ArrowUpDown: (p)=><LucideIcon name="ArrowUpDown" {...p}/>, SortAsc: (p)=><LucideIcon name="ArrowDownUp" {...p}/>, Monitor: (p)=><LucideIcon name="Monitor" {...p}/>, TrendingUp: (p)=><LucideIcon name="TrendingUp" {...p}/>, AlertOctagon: (p)=><LucideIcon name="AlertOctagon" {...p}/>, ClipboardList: (p)=><LucideIcon name="ClipboardList" {...p}/>, Folder: (p)=><LucideIcon name="Folder" {...p}/>, ChevronRight: (p)=><LucideIcon name="ChevronRight" {...p}/> };
+        const Icons = { Target: (p)=><LucideIcon name="Target" {...p}/>, Calendar: (p)=><LucideIcon name="Calendar" {...p}/>, Plus: (p)=><LucideIcon name="Plus" {...p}/>, CheckCircle2: (p)=><LucideIcon name="CheckCircle2" {...p}/>, Clock: (p)=><LucideIcon name="Clock" {...p}/>, BookOpen: (p)=><LucideIcon name="BookOpen" {...p}/>, Star: (p)=><LucideIcon name="Star" {...p}/>, X: (p)=><LucideIcon name="X" {...p}/>, ChevronDown: (p)=><LucideIcon name="ChevronDown" {...p}/>, ChevronUp: (p)=><LucideIcon name="ChevronUp" {...p}/>, ChevronLeft: (p)=><LucideIcon name="ChevronLeft" {...p}/>, ChevronRight: (p)=><LucideIcon name="ChevronRight" {...p}/>, Activity: (p)=><LucideIcon name="Activity" {...p}/>, Moon: (p)=><LucideIcon name="Moon" {...p}/>, Sun: (p)=><LucideIcon name="Sun" {...p}/>, List: (p)=><LucideIcon name="List" {...p}/>, Trash2: (p)=><LucideIcon name="Trash2" {...p}/>, Cloud: (p)=><LucideIcon name="Cloud" {...p}/>, Save: (p)=><LucideIcon name="Save" {...p}/>, Download: (p)=><LucideIcon name="Download" {...p}/>, Upload: (p)=><LucideIcon name="Upload" {...p}/>, Settings: (p)=><LucideIcon name="Settings" {...p}/>, Timer: (p)=><LucideIcon name="Timer" {...p}/>, Play: (p)=><LucideIcon name="Play" {...p}/>, Pause: (p)=><LucideIcon name="Pause" {...p}/>, RotateCcw: (p)=><LucideIcon name="RotateCcw" {...p}/>, Layers: (p)=><LucideIcon name="Layers" {...p}/>, Notebook: (p)=><LucideIcon name="Notebook" {...p}/>, Search: (p)=><LucideIcon name="Search" {...p}/>, BarChart3: (p)=><LucideIcon name="BarChart3" {...p}/>, LinkIcon: (p)=><LucideIcon name="Link" {...p}/>, FileJson: (p)=><LucideIcon name="FileJson" {...p}/>, Lock: (p)=><LucideIcon name="Lock" {...p}/>, Home: (p)=><LucideIcon name="Home" {...p}/>, PieChart: (p)=><LucideIcon name="PieChart" {...p}/>, MoreHorizontal: (p)=><LucideIcon name="MoreHorizontal" {...p}/>, PenTool: (p)=><LucideIcon name="PenTool" {...p}/>, MonitorPlay: (p)=><LucideIcon name="MonitorPlay" {...p}/>, AlertTriangle: (p)=><LucideIcon name="AlertTriangle" {...p}/>, ArrowLeft: (p)=><LucideIcon name="ArrowLeft" {...p}/>, Bell: (p)=><LucideIcon name="Bell" {...p}/>, Flame: (p)=><LucideIcon name="Flame" {...p}/>, ListTodo: (p)=><LucideIcon name="ListTodo" {...p}/>, LogOut: (p)=><LucideIcon name="LogOut" {...p}/>, Coffee: (p)=><LucideIcon name="Coffee" {...p}/>, Edit: (p)=><LucideIcon name="PenTool" {...p}/>, Filter: (p)=><LucideIcon name="Filter" {...p}/>, CalendarCheck: (p)=><LucideIcon name="CalendarCheck" {...p}/>, ArrowUpDown: (p)=><LucideIcon name="ArrowUpDown" {...p}/>, SortAsc: (p)=><LucideIcon name="ArrowDownUp" {...p}/>, Monitor: (p)=><LucideIcon name="Monitor" {...p}/> };
 
         // --- CONTEXT: TOAST ---
         const ToastContext = createContext();
@@ -158,70 +163,55 @@
             return ( <ToastContext.Provider value={{ showToast }}> {children} <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-[100] flex flex-col gap-2 w-full max-w-sm px-4"> {toasts.map(toast => ( <div key={toast.id} className={`p-4 rounded-2xl shadow-xl border-2 animate-bounce-in flex items-center gap-3 backdrop-blur-md ${ toast.type === 'error' ? 'bg-red-50/90 border-red-200 text-red-700 dark:bg-red-900/90 dark:text-white dark:border-red-800' : 'bg-white/90 border-white text-slate-800 dark:bg-zinc-800/90 dark:text-white dark:border-zinc-700' }`}> {toast.type === 'error' ? <Icons.AlertTriangle size={20}/> : <Icons.CheckCircle2 size={20} className="text-emerald-500"/>} <span className="text-sm font-bold">{toast.message}</span> </div> ))} </div> </ToastContext.Provider> );
         };
 
-        // --- HOOK: FIREBASE SYNC (Robust with Fallback) ---
-        const useSync = (topics, logs, simulations, setTopics, setLogs, setSimulations) => {
+        // --- HOOK: FIREBASE SYNC (Strict Mode) ---
+        const useSync = (topics, logs, setTopics, setLogs) => {
             const [status, setStatus] = useState('offline');
             const [user, setUser] = useState(null);
             const [syncKey, setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
             const [appId, setAppId] = useState('resiflow');
-            const [isFirebaseReady, setIsFirebaseReady] = useState(!!window.firebaseModules); 
             
             const dbRef = useRef(null);
-            const stateRef = useRef({ topics, logs, simulations });
+            const stateRef = useRef({ topics, logs });
             
-            useEffect(() => { stateRef.current = { topics, logs, simulations }; }, [topics, logs, simulations]);
+            // Keep ref updated
+            useEffect(() => { stateRef.current = { topics, logs }; }, [topics, logs]);
 
-            useEffect(() => {
-                if (window.firebaseModules) {
-                    setIsFirebaseReady(true);
-                } else {
-                    const handleReady = () => setIsFirebaseReady(true);
-                    window.addEventListener('firebase-ready', handleReady);
-                    return () => window.removeEventListener('firebase-ready', handleReady);
-                }
-            }, []);
-
+            // Save Key
             const updateSyncKey = (key) => {
                 setSyncKey(key);
                 localStorage.setItem('resiflow_sync_key', key);
                 if(key !== syncKey) {
-                    setTopics([]); setLogs([]); setSimulations([]);
+                    setTopics([]); // Clear on key switch to avoid mixup
+                    setLogs([]);
                 }
             };
 
+            // Init Auth First
             useEffect(() => {
-                if (!isFirebaseReady || !window.firebaseModules) return;
-
+                if (!window.firebaseModules) return;
                 const { initializeApp, getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, getFirestore } = window.firebaseModules;
                 
                 try {
-                    // FALLBACK LOGIC HERE:
-                    const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : USER_FIREBASE_CONFIG;
-                    const aid = typeof __app_id !== 'undefined' ? __app_id : 'resiflow-app';
+                    const fbConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+                    const aid = typeof __app_id !== 'undefined' ? __app_id : 'default-app';
                     setAppId(aid);
 
                     if (fbConfig) {
-                        let app;
-                        try {
-                            app = initializeApp(fbConfig);
-                        } catch(e) {
-                             // Ignore re-init error
-                        }
-                        
-                        const auth = getAuth();
-                        const db = getFirestore();
+                        const app = initializeApp(fbConfig);
+                        const auth = getAuth(app);
+                        const db = getFirestore(app);
                         dbRef.current = db;
 
                         const initAuth = async () => {
                             try {
-                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
-                                    await signInWithCustomToken(auth, __initial_auth_token); 
-                                } else { 
-                                    await signInAnonymously(auth); 
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await signInWithCustomToken(auth, __initial_auth_token);
+                                } else {
+                                    await signInAnonymously(auth);
                                 }
-                            } catch (error) { 
-                                console.error("Auth Error", error); 
-                                setStatus('error'); 
+                            } catch (error) {
+                                console.error("Auth Error", error);
+                                setStatus('error');
                             }
                         };
                         initAuth();
@@ -235,25 +225,33 @@
                     console.error("Firebase Init Error", e);
                     setStatus('error');
                 }
-            }, [isFirebaseReady]);
+            }, []);
 
+            // Init Data Sync (Dependent on User & Key)
             useEffect(() => {
                 if (!user || !dbRef.current || !syncKey || !window.firebaseModules) {
                     if(!syncKey && status !== 'error') setStatus('offline');
                     return;
                 }
 
-                const { doc, onSnapshot } = window.firebaseModules;
-                // Public Path: artifacts/{appId}/public/data/{collection}/{docId}
+                const { doc, onSnapshot, collection } = window.firebaseModules;
+                
+                // Using Public Data Path per rules: /artifacts/{appId}/public/data/{collection}/{docId}
+                // Mapping: Collection = 'resiflow_sync', DocId = syncKey
                 const docRef = doc(dbRef.current, 'artifacts', appId, 'public', 'data', 'resiflow_sync', syncKey);
                 
                 setStatus('syncing');
                 const unsubscribe = onSnapshot(docRef, (s) => {
                     if (s.exists()) {
                         const d = s.data();
-                        if (d.topics) { const merged = mergeItems(stateRef.current.topics, d.topics); if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.topics)) setTopics(merged); }
-                        if (d.logs) { const merged = mergeItems(stateRef.current.logs, d.logs); if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.logs)) setLogs(merged); }
-                        if (d.simulations) { const merged = mergeItems(stateRef.current.simulations, d.simulations); if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.simulations)) setSimulations(merged); }
+                        if (d.topics) { 
+                            const merged = mergeItems(stateRef.current.topics, d.topics); 
+                            if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.topics)) setTopics(merged); 
+                        }
+                        if (d.logs) { 
+                            const merged = mergeItems(stateRef.current.logs, d.logs); 
+                            if (JSON.stringify(merged) !== JSON.stringify(stateRef.current.logs)) setLogs(merged); 
+                        }
                     }
                     setStatus('online');
                 }, (err) => {
@@ -262,14 +260,14 @@
                 });
 
                 return () => unsubscribe();
-            }, [user, syncKey, appId, isFirebaseReady]);
+            }, [user, syncKey, appId]);
 
-            const saveToCloud = async (newTopics, newLogs, newSimulations) => {
+            const saveToCloud = async (newTopics, newLogs) => {
                 if (!user || !dbRef.current || !syncKey) return;
                 try {
                     const { doc, setDoc } = window.firebaseModules;
                     const docRef = doc(dbRef.current, 'artifacts', appId, 'public', 'data', 'resiflow_sync', syncKey);
-                    await setDoc(docRef, { topics: newTopics, logs: newLogs, simulations: newSimulations, updatedAt: new Date().toISOString() }, { merge: true });
+                    await setDoc(docRef, { topics: newTopics, logs: newLogs, updatedAt: new Date().toISOString() }, { merge: true });
                 } catch (e) {
                     console.error("Save Error", e);
                     setStatus('error');
@@ -282,398 +280,29 @@
         // --- COMPONENTS: MODALS & WIDGETS ---
         const ModalWrapper = ({ isOpen, onClose, children, title }) => { if (!isOpen) return null; return ( <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe"> <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div> <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0"> <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10"> <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3> <button aria-label="Fechar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button> </div> <div className="overflow-y-auto p-0">{children}</div> </div> </div> ); };
 
-        const SettingsModal = ({ isOpen, onClose, topics, logs, simulations, setTopics, setLogs, setSimulations, syncKey, setSyncKey, status, appId, user }) => {
+        const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status, appId, user }) => {
             const [tempKey, setTempKey] = useState(syncKey);
             const { showToast } = useContext(ToastContext);
             useEffect(() => setTempKey(syncKey), [syncKey]);
-            const handleExport = () => { const dataStr = JSON.stringify({ topics, logs, simulations }, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `reviewflow_bkp_${getTodayStr()}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("Backup exportado!"); };
-            const handleImport = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!Array.isArray(data.topics)) throw new Error("Formato inválido"); setTopics(prev => mergeItems(prev, data.topics)); if(data.logs) setLogs(prev => mergeItems(prev, data.logs)); if(data.simulations) setSimulations(prev => mergeItems(prev, data.simulations)); showToast("Importado com sucesso!"); onClose(); } catch (err) { showToast("Erro na importação", "error"); } }; reader.readAsText(file); e.target.value = null; };
-            return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Configurações"> <div className="p-6 space-y-6"> <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50"> <h4 className="font-bold text-sm text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-2"><Icons.Cloud size={16}/> Sincronização Nuvem</h4> <div className="space-y-3"> <div><label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Acesso (Sync Key)</label><div className="flex gap-2"><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Crie uma senha única" className="flex-1 p-2 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 text-sm dark:text-white font-mono" /><button onClick={() => { setSyncKey(tempKey); onClose(); showToast("Chave salva!"); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg font-bold text-xs">Salvar</button></div><p className="text-[10px] text-slate-400 mt-1">⚠️ Salve esta chave! Se você perder, perderá seus dados.</p></div> <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado' : status === 'error' ? 'Erro de Conexão' : 'Desconectado'}</span></div></div> </div> </div> <div className="p-4 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700"> <h4 className="font-bold text-xs text-slate-500 uppercase mb-2">Status do Sistema</h4> <div className="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">App ID: {appId}<br/>User ID: {user ? (user.isAnonymous ? 'Anon' : 'Auth') : '...'}</div> </div> <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700"> <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><Icons.FileJson size={16}/> Backup Local</h4> <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-white dark:bg-zinc-700 hover:bg-slate-100 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-600"><Icons.Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Icons.Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div> </div> </div> </ModalWrapper> );
-        };
-
-        const FilterModal = ({ isOpen, onClose, filter, setFilter, areaFilter, setAreaFilter }) => {
-            if (!isOpen) return null;
-            return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Filtrar Conteúdo"> <div className="p-6 space-y-6"> <div> <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Período / Status</label> <div className="grid grid-cols-3 gap-2"> <button onClick={() => { setFilter('all'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'all' ? 'bg-slate-800 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Todos</button> <button onClick={() => { setFilter('today'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'today' ? 'bg-blue-600 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Hoje</button> <button onClick={() => { setFilter('high_priority'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'high_priority' ? 'bg-red-600 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Alta Prior.</button> </div> </div> <div> <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Área de Estudo</label> <div className="grid grid-cols-2 gap-2"> <button onClick={() => { setAreaFilter('all'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${areaFilter === 'all' ? 'bg-slate-800 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Todas</button> {AREAS.map(a => ( <button key={a.id} onClick={() => { setAreaFilter(a.id); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${areaFilter === a.id ? `${a.color} border-transparent` : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>{a.name}</button> ))} </div> </div> </div> </ModalWrapper> );
-        };
-
-        const SortModal = ({ isOpen, onClose, sortBy, setSortBy }) => {
-            if (!isOpen) return null;
-            return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Ordenar Por"> <div className="p-6 space-y-2"> {[{ id: 'date', label: '📅 Data de Revisão (Padrão)' }, { id: 'importance', label: '⭐ Prioridade (Alta Primeiro)' }, { id: 'created', label: '✨ Recentes (Criação)' }, { id: 'title', label: '🔤 Título (A-Z)' }].map(opt => ( <button key={opt.id} onClick={() => { setSortBy(opt.id); onClose(); }} className={`w-full text-left py-4 px-4 rounded-xl font-bold text-sm flex justify-between items-center transition-colors ${sortBy === opt.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-slate-300'}`}> {opt.label} {sortBy === opt.id && <Icons.CheckCircle2 size={18} />} </button> ))} </div> </ModalWrapper> );
-        };
-
-        const AddTopicModal = ({ isOpen, onClose, onSave }) => { if (!isOpen) return null; const [title, setTitle] = useState(''); const [area, setArea] = useState('clinica'); const [subarea, setSubarea] = useState(''); const [importance, setImportance] = useState('medium'); const [date, setDate] = useState(getTodayStr()); const [link, setLink] = useState(''); const { showToast } = useContext(ToastContext); const handleSubmit = (e) => { e.preventDefault(); if(!title) return; vibrate(VIBRATE_PATTERNS.tick); onSave({ title, area, subarea, importance, date, link }); showToast("Tópico criado com sucesso!"); setTitle(''); setSubarea(''); setLink(''); onClose(); }; return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Novo Conteúdo"> <div className="p-6 space-y-5"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label> <input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /> </div> <div className="grid grid-cols-2 gap-4"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select> </div> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{(SUB_AREAS[area]||[]).map(s => <option key={s} value={s}>{s}</option>)}</select> </div> </div> <div className="space-y-3"> <label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label> <div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div> </div> <div className="grid grid-cols-1 gap-4"> <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={date} onChange={e => setDate(e.target.value)} /></div> <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} /></div> </div> </div> <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> <button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Plus size={20}/> Criar Plano</button> </div> </ModalWrapper> ); };
-
-        const EditTopicModal = ({ isOpen, onClose, onSave, topic }) => { if (!isOpen || !topic) return null; const [title, setTitle] = useState(topic.title); const [area, setArea] = useState(topic.area); const [subarea, setSubarea] = useState(topic.subarea || ''); const [importance, setImportance] = useState(topic.importance); const [link, setLink] = useState(topic.materialLink || ''); const { showToast } = useContext(ToastContext); const handleSubmit = (e) => { e.preventDefault(); if(!title) return; vibrate(VIBRATE_PATTERNS.tick); onSave({ ...topic, title, area, subarea, importance, materialLink: link, updatedAt: Date.now() }); showToast("Tópico atualizado!"); onClose(); }; return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Editar Tópico"> <div className="p-6 space-y-5"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label> <input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /> </div> <div className="grid grid-cols-2 gap-4"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select> </div> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{(SUB_AREAS[area]||[]).map(s => <option key={s} value={s}>{s}</option>)}</select> </div> </div> <div className="space-y-3"> <label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label> <div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div> </div> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label> <input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} /> </div> </div> <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> <button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Save size={20}/> Salvar Alterações</button> </div> </ModalWrapper> ); };
-
-        const AddSimulationModal = ({ isOpen, onClose, onSave, existingTopics }) => {
-            if (!isOpen) return null;
-            const [date, setDate] = useState(getTodayStr());
-            const [exam, setExam] = useState('');
-            const [year, setYear] = useState(new Date().getFullYear());
-            const [total, setTotal] = useState(100);
-            const [correct, setCorrect] = useState(0);
-            const [selectedDifficulties, setSelectedDifficulties] = useState([]);
-            
-            const handleSubmit = (e) => { e.preventDefault(); onSave({ date, exam, year, total, correct, difficultTopics: selectedDifficulties }); onClose(); };
-            const toggleDifficulty = (topicId) => { setSelectedDifficulties(prev => prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]); };
-
-            return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Novo Simulado"> <div className="p-6 space-y-4"> <div className="grid grid-cols-2 gap-4"> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={date} onChange={e => setDate(e.target.value)} required /></div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Ano da Prova</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={year} onChange={e => setYear(e.target.value)} required /></div> </div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Instituição / Prova</label><input type="text" placeholder="Ex: USP, UNIFESP..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={exam} onChange={e => setExam(e.target.value)} required /></div> <div className="grid grid-cols-2 gap-4"> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Questões</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={total} onChange={e => setTotal(Number(e.target.value))} required /></div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Acertos</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={correct} onChange={e => setCorrect(Number(e.target.value))} required /></div> </div> <div> <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Reforço: Onde você errou mais?</label> <div className="max-h-40 overflow-y-auto border rounded-xl p-2 dark:border-zinc-700"> {existingTopics.length === 0 ? <p className="text-xs text-slate-400 p-2">Nenhum tópico cadastrado.</p> : existingTopics.map(t => ( <div key={t.id} onClick={() => toggleDifficulty(t.id)} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer text-sm transition-colors ${selectedDifficulties.includes(t.id) ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'hover:bg-slate-50 dark:hover:bg-zinc-800'}`}> <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedDifficulties.includes(t.id) ? 'bg-red-500 border-red-500' : 'border-slate-300'}`}>{selectedDifficulties.includes(t.id) && <Icons.X size={12} className="text-white"/>}</div> <span className="truncate">{t.title}</span> </div> ))} </div> <p className="text-[10px] text-slate-400 mt-1">Tópicos selecionados ganharão uma revisão extra de reforço (20q) na próxima semana.</p> </div> </div> <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> <button onClick={handleSubmit} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Salvar Simulado</button> </div> </ModalWrapper> );
-        };
-
-        const EditSimulationModal = ({ isOpen, onClose, onSave, existingTopics, simulation }) => {
-            if (!isOpen || !simulation) return null;
-            const [date, setDate] = useState(simulation.date);
-            const [exam, setExam] = useState(simulation.exam);
-            const [year, setYear] = useState(simulation.year);
-            const [total, setTotal] = useState(simulation.total);
-            const [correct, setCorrect] = useState(simulation.correct);
-            const [selectedDifficulties, setSelectedDifficulties] = useState(simulation.difficultTopics || []);
-            
-            const handleSubmit = (e) => { e.preventDefault(); onSave({ ...simulation, date, exam, year, total, correct, difficultTopics: selectedDifficulties }); onClose(); };
-            const toggleDifficulty = (topicId) => { setSelectedDifficulties(prev => prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]); };
-
-            return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Editar Simulado"> <div className="p-6 space-y-4"> <div className="grid grid-cols-2 gap-4"> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={date} onChange={e => setDate(e.target.value)} required /></div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Ano da Prova</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={year} onChange={e => setYear(e.target.value)} required /></div> </div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Instituição / Prova</label><input type="text" placeholder="Ex: USP, UNIFESP..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={exam} onChange={e => setExam(e.target.value)} required /></div> <div className="grid grid-cols-2 gap-4"> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Questões</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={total} onChange={e => setTotal(Number(e.target.value))} required /></div> <div><label className="text-xs font-bold text-slate-500 uppercase mb-1">Acertos</label><input type="number" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border dark:border-zinc-700" value={correct} onChange={e => setCorrect(Number(e.target.value))} required /></div> </div> <div> <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Reforço: Onde você errou mais?</label> <div className="max-h-40 overflow-y-auto border rounded-xl p-2 dark:border-zinc-700"> {existingTopics.length === 0 ? <p className="text-xs text-slate-400 p-2">Nenhum tópico cadastrado.</p> : existingTopics.map(t => ( <div key={t.id} onClick={() => toggleDifficulty(t.id)} className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer text-sm transition-colors ${selectedDifficulties.includes(t.id) ? 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300' : 'hover:bg-slate-50 dark:hover:bg-zinc-800'}`}> <div className={`w-4 h-4 rounded border flex items-center justify-center ${selectedDifficulties.includes(t.id) ? 'bg-red-500 border-red-500' : 'border-slate-300'}`}>{selectedDifficulties.includes(t.id) && <Icons.X size={12} className="text-white"/>}</div> <span className="truncate">{t.title}</span> </div> ))} </div> <p className="text-[10px] text-slate-400 mt-1">Tópicos selecionados ganharão uma revisão extra de reforço (20q) na próxima semana.</p> </div> </div> <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> <button onClick={handleSubmit} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Salvar Alterações</button> </div> </ModalWrapper> );
-        };
-
-        // --- WIDGETS & VIEWS ---
-        const TopicCard = React.memo(({ topic, onOpenReview, onDelete, onEdit }) => { const [expanded, setExpanded] = useState(false); const areaConfig = AREAS.find(a => a.id === topic.area) || AREAS[0]; const activeBorder = areaConfig.accent; const reviewsDone = topic.reviews.filter(r => r.done); const avgAccuracy = reviewsDone.length > 0 ? Math.round(reviewsDone.reduce((acc, r) => acc + (r.correct/r.total), 0) / reviewsDone.length * 100) : 0; const isLate = topic.reviews.find(r => !r.done && r.date < getTodayStr()); const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[topic.area] || 'blue'; const touchStartX = useRef(0); const touchEndX = useRef(0); return ( <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-${c}-900/50`} onTouchStart={e => touchStartX.current = e.targetTouches[0].clientX} onTouchMove={e => touchEndX.current = e.targetTouches[0].clientX} onTouchEnd={() => { if (touchEndX.current - touchStartX.current > 100) { const nextReviewIndex = topic.reviews.findIndex(r => !r.done); if (nextReviewIndex !== -1) { vibrate(VIBRATE_PATTERNS.tick); onOpenReview(topic.id, nextReviewIndex); } } }}> <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}> <div className="flex justify-between items-start"> <div className="flex-1 pr-4"> <div className="flex items-center gap-2 mb-1.5"> <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{areaConfig.name}{topic.subarea ? ` - ${topic.subarea}` : ''}</span> {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>} {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>} </div> <h3 className={`font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-${c}-600 dark:group-hover:text-${c}-400 transition-colors`}>{topic.title}</h3> </div> <div className="flex flex-col items-end gap-1.5"> {reviewsDone.length > 0 && ( <span className={`text-xs font-black px-2 py-0.5 rounded-full ${avgAccuracy >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>{avgAccuracy}%</span> )} <div className="flex gap-1"> {[0,1,2,3].map(i => { const rev = topic.reviews[i]; let color = 'bg-slate-200 dark:bg-zinc-800'; if (rev && rev.done) color = (rev.correct/rev.total) >= 0.8 ? 'bg-emerald-500' : 'bg-amber-500'; else if (rev && !rev.done && (i === 0 || topic.reviews[i-1].done)) color = `bg-${c}-500 animate-pulse`; return <div key={i} className={`w-1.5 h-1.5 rounded-full ${color}`}></div> })} </div> </div> </div> </div> {expanded && ( <div className="px-4 pb-4 pt-0 bg-slate-50/50 dark:bg-zinc-950/30 border-t border-slate-100 dark:border-zinc-800 animate-fade-in"> <div className="space-y-2 mt-3"> {topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? `bg-white dark:bg-zinc-800 shadow-sm border border-${c}-100 dark:border-${c}-900/30` : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? `text-${c}-600 dark:text-${c}-400` : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${!isDone && rev.date < getTodayStr() ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(VIBRATE_PATTERNS.tick);}} className={`bg-${c}-600 hover:bg-${c}-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-${c}-500/20 active:scale-95 transition-transform`}>Revisar</button> ) : ( <Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/> )} </div> ) })} </div> <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center"> {topic.materialLink ? ( <a href={topic.materialLink} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><Icons.LinkIcon size={12}/> Material</a> ) : <div></div>} <div className="flex gap-2"> <button onClick={(e) => { e.stopPropagation(); onEdit(topic.id); }} className="text-xs text-slate-500 hover:text-blue-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"><Icons.Edit size={12}/> Editar</button> <button onClick={(e) => { e.stopPropagation(); onDelete(topic.id); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Icons.Trash2 size={12}/> Excluir</button> </div> </div> </div> )} <div className="absolute top-5 right-4 pointer-events-none text-slate-300 dark:text-zinc-600">{expanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}</div> </div> ); }, (prev, next) => prev.topic.id === next.topic.id && prev.topic.updatedAt === next.topic.updatedAt);
-
-        const DiaryWidget = ({ logs, topics }) => { const streak = useMemo(() => { let currentStreak = 0; const today = new Date(); let d = new Date(today); const todayStr = d.toISOString().split('T')[0]; const todayActive = logs.some(l => l.date === todayStr && !l.deleted && l.type === 'checklist'); if (!todayActive) d.setDate(d.getDate() - 1); while (true) { const dateStr = d.toISOString().split('T')[0]; if (logs.some(l => l.date === dateStr && !l.deleted && l.type === 'checklist')) { currentStreak++; d.setDate(d.getDate() - 1); } else break; } return currentStreak; }, [logs]); const upcomingReviews = useMemo(() => { const upcoming = []; const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); const tomorrowStr = tomorrow.toISOString().split('T')[0]; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach(r => { if (!r.done && r.date >= tomorrowStr) upcoming.push({ topic: t, review: r }); }); }); return upcoming.sort((a, b) => a.review.date.localeCompare(b.review.date)).slice(0, 5); }, [topics]); return ( <div className="space-y-6"> <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 relative overflow-hidden"> <Icons.Flame className="absolute right-4 bottom-4 opacity-20" size={80}/> <div className="relative z-10"> <div className="text-indigo-100 text-sm font-bold mb-1 uppercase">Sequência Atual</div> <div className="text-5xl font-black tracking-tighter">{streak} <span className="text-2xl">dias</span></div> <div className="text-indigo-100 text-xs mt-2 font-medium">Mantenha o foco! 🔥</div> </div> </div> <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm"> <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><Icons.Calendar size={18} className="text-blue-500"/> Próximas Revisões</h3> <div className="space-y-3">{upcomingReviews.length === 0 ? (<p className="text-center text-slate-400 text-sm py-4">Nada agendado para breve.</p>) : (upcomingReviews.map((item, i) => { const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; return ( <div key={i} className="flex items-start gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors"> <div className={`w-1.5 h-1.5 rounded-full mt-2 bg-${c}-500`}></div> <div className="flex-1 min-w-0"> <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">{formatDate(item.review.date)}</div> <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{item.topic.title}</div> <div className="text-xs text-slate-500">{item.review.label}</div> </div> </div> ) }))}</div> </div> </div> ); };
-
-        const DiaryView = ({ logs, onAddLog, onDeleteLog, topics }) => { const [selectedDate, setSelectedDate] = useState(getTodayStr()); const { showToast } = useContext(ToastContext); const scrollRef = useRef(null); useEffect(() => { if(scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth; }, []); const changeDate = (days) => { const d = new Date(selectedDate + 'T12:00:00'); d.setDate(d.getDate() + days); setSelectedDate(d.toISOString().split('T')[0]); }; const getStatus = (date) => { const dayLogs = logs.filter(l => l.date === date && !l.deleted && l.type === 'checklist'); return { questions: dayLogs.some(l => l.desc === 'Questões'), anki: dayLogs.some(l => l.desc === 'Anki'), class: dayLogs.some(l => l.desc === 'Aula') }; }; const toggleChecklist = (item) => { vibrate(VIBRATE_PATTERNS.tick); const status = getStatus(selectedDate); const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class']; if (isDone) { const logToRemove = logs.find(l => l.date === selectedDate && !l.deleted && l.type === 'checklist' && l.desc === item); if (logToRemove) onDeleteLog(logToRemove.id); } else { onAddLog({ id: generateId(), date: selectedDate, type: 'checklist', desc: item, val: '1', updatedAt: Date.now(), deleted: false }); vibrate(VIBRATE_PATTERNS.success); showToast(`${item} registrado!`); triggerConfetti(); } }; const status = getStatus(selectedDate); const heatmapData = useMemo(() => { const today = new Date(); const data = []; let minDate = new Date(); minDate.setDate(minDate.getDate() - 30); if (logs.length > 0) { const dates = logs.map(l => new Date(l.date)); const earliest = new Date(Math.min(...dates)); if (earliest < minDate) minDate = earliest; } const diffTime = Math.abs(today - minDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; for (let i = 0; i < diffDays; i++) { const d = new Date(minDate); d.setDate(d.getDate() + i); const dateStr = d.toISOString().split('T')[0]; const dayLogs = logs.filter(l => l.date === dateStr && !l.deleted && l.type === 'checklist'); const count = dayLogs.length; let type = 'none'; let tooltip = ''; if (count > 0) { const descs = dayLogs.map(l => l.desc); tooltip = descs.join(', '); const hasQ = dayLogs.some(l => l.desc === 'Questões'); const hasA = dayLogs.some(l => l.desc === 'Anki'); const hasC = dayLogs.some(l => l.desc === 'Aula'); if (hasQ && !hasA && !hasC) type = 'questions'; else if (!hasQ && hasA && !hasC) type = 'anki'; else if (!hasQ && !hasA && hasC) type = 'class'; else type = 'mixed'; } data.push({ date: dateStr, count, type, tooltip }); } return data; }, [logs]); const getHeatmapColor = (item) => { if (item.count === 0) return 'bg-slate-100 dark:bg-zinc-800'; if (item.type === 'questions') return 'bg-blue-500'; if (item.type === 'anki') return 'bg-purple-500'; if (item.type === 'class') return 'bg-red-500'; return 'bg-emerald-500'; }; return ( <div className="animate-fade-in space-y-6 pb-32 lg:pb-0"> <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden"> <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar pb-2"> <div className="flex gap-1 flex-wrap h-32 content-start flex-col"> {heatmapData.map((day, i) => ( <div key={day.date} className={`w-3 h-3 rounded-sm ${getHeatmapColor(day)}`} title={`${formatDate(day.date)}: ${day.tooltip || 'Sem atividades'}`}></div> ))} </div> </div> <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1"><span>Início</span><span>Hoje</span></div> </div> <div className="flex items-center justify-between bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-xl"> <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors"><Icons.ChevronLeft size={20} className="text-slate-500"/></button> <div className="font-bold text-slate-700 dark:text-slate-200">{selectedDate === getTodayStr() ? 'Hoje, ' : ''}{formatFullDate(selectedDate)}</div> <button onClick={() => changeDate(1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors" disabled={selectedDate >= getTodayStr()}><Icons.ChevronRight size={20} className={selectedDate >= getTodayStr() ? "text-slate-300 dark:text-zinc-800" : "text-slate-500"}/></button> </div> <div className="grid grid-cols-1 gap-3"> {['Questões', 'Anki', 'Aula'].map(item => { const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class']; const config = { 'Questões': { icon: Icons.Target, color: 'blue' }, 'Anki': { icon: Icons.Layers, color: 'purple' }, 'Aula': { icon: Icons.MonitorPlay, color: 'red' } }[item]; const Icon = config.icon; return ( <button key={item} onClick={() => toggleChecklist(item)} className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group active:scale-[0.98] ${isDone ? `bg-${config.color}-50 dark:bg-${config.color}-900/20 border-${config.color}-500 dark:border-${config.color}-500` : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}> <div className="flex items-center gap-4"> <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDone ? `bg-${config.color}-500 text-white` : `bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600`}`}><Icon size={24} strokeWidth={isDone ? 3 : 2} /></div> <div className="text-left"> <div className={`text-lg font-bold transition-colors ${isDone ? `text-${config.color}-700 dark:text-${config.color}-300` : 'text-slate-700 dark:text-slate-300'}`}>{item}</div> <div className="text-xs font-medium text-slate-400 dark:text-slate-500">{isDone ? 'Concluído!' : 'Toque para marcar'}</div> </div> </div> <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? `bg-${config.color}-500 border-${config.color}-500` : 'border-slate-300 dark:border-zinc-600'}`}>{isDone && <Icons.CheckCircle2 size={14} className="text-white" strokeWidth={4} />}</div> </button> ); })} </div> </div> ); };
-
-        const CalendarView = ({ topics, onOpenReview }) => { const [displayDate, setDisplayDate] = useState(new Date()); const [selectedDate, setSelectedDate] = useState(null); const currentMonth = displayDate.getMonth(); const currentYear = displayDate.getFullYear(); const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); const startDay = new Date(currentYear, currentMonth, 1).getDay(); const days = Array(startDay).fill(null).concat([...Array(daysInMonth).keys()].map(i => i + 1)); const prevMonth = () => setDisplayDate(new Date(currentYear, currentMonth - 1, 1)); const nextMonth = () => setDisplayDate(new Date(currentYear, currentMonth + 1, 1)); const goToday = () => setDisplayDate(new Date()); const getReviewsForDate = (dateStr) => { const list = []; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach((r, idx) => { if (r.date === dateStr) list.push({ topic: t, review: r, idx }); }); }); return list; }; return ( <div className="animate-fade-in pb-32 lg:pb-0 flex flex-col lg:flex-row gap-6 h-full"> <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm p-6 h-fit"> <div className="flex items-center justify-between mb-6"> <h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">{displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3> <div className="flex gap-1"> <button aria-label="Mês anterior" onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button> <button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button> <button aria-label="Próximo mês" onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button> </div> </div> <div className="grid grid-cols-7 gap-2 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div> <div className="grid grid-cols-7 gap-2"> {days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviews = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pending = reviews.filter(x => !x.review.done).length; const done = reviews.filter(x => x.review.done).length; const hasDots = pending > 0 || done > 0; return ( <button key={idx} onClick={() => setSelectedDate(selectedDate === dateStr ? null : dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${selectedDate === dateStr ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 z-10' : isToday ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}> <span className={`text-sm font-bold`}>{day}</span> {hasDots && (<div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">{[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}{[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}</div>)} </button> ); })} </div> </div> {selectedDate && ( <div className="flex-1 lg:max-w-md animate-fade-in"> <div className="bg-slate-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-slate-200 dark:border-white/5 h-full flex flex-col"> <h4 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2 mb-4"><Icons.CalendarCheck size={20} className="text-blue-500"/> {formatFullDate(selectedDate)}</h4> <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1"> {getReviewsForDate(selectedDate).length === 0 ? ( <div className="text-center text-slate-400 py-8 flex flex-col items-center justify-center h-40"> <Icons.Coffee size={32} className="mb-2 opacity-50"/> <p>Nada agendado para este dia.</p> </div> ) : ( getReviewsForDate(selectedDate).map((item, i) => { const areaInfo = AREAS.find(a => a.id === item.topic.area) || AREAS[0]; const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; const acc = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0; return ( <div key={i} className={`p-4 rounded-xl border relative overflow-hidden bg-white dark:bg-zinc-900 border-slate-200 dark:border-${c}-500/30 shadow-sm`}> <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div> <div className="flex justify-between items-start pl-3"> <div className="flex-1"> <div className="flex items-center gap-2 mb-1"> <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${areaInfo.color}`}>{areaInfo.name.toUpperCase()}</span> {item.topic.importance === 'high' && <span className="text-red-500 text-[10px] flex items-center"><Icons.Star size={10} fill="currentColor"/></span>} </div> <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div> <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"> <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span> <span>{item.review.label.split(':')[1]} • {item.review.done ? `${item.review.correct}/${item.review.total} acertos` : `Meta: ${item.review.targetQ}q`}</span> </div> </div> <div className="flex flex-col items-end gap-2"> {item.review.done ? (<><span className={`text-sm font-black ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</span></>) : (<button onClick={() => { onOpenReview(item.topic.id, item.idx); }} className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-blue-500/20 shadow-lg">Revisar</button>)} </div> </div> </div> ); }) )} </div> </div> </div> )} </div> ); };
-
-        const AnalyticsFilterModal = ({ isOpen, onClose, area, subarea, setArea, setSubarea }) => {
-            if (!isOpen) return null;
-            return (
-                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Filtrar Análise">
-                    <div className="p-6 space-y-6">
-                        <div>
-                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Área</label>
-                            <div className="flex flex-wrap gap-2">
-                                <button onClick={() => { setArea('all'); setSubarea('all'); }} className={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${area === 'all' ? 'bg-slate-800 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Todas</button>
-                                {AREAS.map(a => (
-                                    <button key={a.id} onClick={() => { setArea(a.id); setSubarea('all'); }} className={`px-3 py-2 rounded-xl text-sm font-bold border transition-all ${area === a.id ? `${a.color.split(' ')[0]} ${a.color.split(' ')[1]} border-transparent ring-2 ring-current ring-offset-1 dark:ring-offset-zinc-900` : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>{a.name}</button>
-                                ))}
-                            </div>
-                        </div>
-                        {area !== 'all' && (
-                            <div className="animate-fade-in">
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Subárea</label>
-                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 transition-colors" value={subarea} onChange={e => setSubarea(e.target.value)}>
-                                    <option value="all">Todas as Subáreas</option>
-                                    {(SUB_AREAS[area] || []).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                        )}
-                    </div>
-                     <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl">
-                        <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Aplicar Filtros</button>
-                    </div>
-                </ModalWrapper>
-            );
-        };
-
-        const AnalyticsDashboard = ({ topics }) => {
-            const [selectedArea, setSelectedArea] = useState('all');
-            const [selectedSubarea, setSelectedSubarea] = useState('all');
-            const [isFilterOpen, setIsFilterOpen] = useState(false);
-            const [hoveredPoint, setHoveredPoint] = useState(null);
-
-            const filteredTopics = useMemo(() => {
-                let t = topics.filter(topic => !topic.deleted);
-                if (selectedArea !== 'all') t = t.filter(topic => topic.area === selectedArea);
-                if (selectedSubarea !== 'all') t = t.filter(topic => topic.subarea === selectedSubarea);
-                return t;
-            }, [topics, selectedArea, selectedSubarea]);
-
-            const stats = useMemo(() => {
-                const totalQ = filteredTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0);
-                const totalC = filteredTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0);
-                const globalAcc = totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0;
-                const reviewsCount = filteredTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).length, 0);
-                return { totalQ, totalC, globalAcc, reviewsCount };
-            }, [filteredTopics]);
-
-            const weeklyEvolution = useMemo(() => {
-                const points = [];
-                for(let i=7; i>=0; i--) {
-                    const d = new Date();
-                    d.setDate(d.getDate() - (i * 7));
-                    const weekEnd = new Date(d);
-                    const weekStart = new Date(d.setDate(d.getDate() - 6));
-                    
-                    const weekStartStr = weekStart.toISOString().split('T')[0];
-                    const weekEndStr = weekEnd.toISOString().split('T')[0];
-                    
-                    let wTotal = 0;
-                    let wCorrect = 0;
-                    
-                    filteredTopics.forEach(t => {
-                        t.reviews.forEach(r => {
-                            if(r.done && r.date >= weekStartStr && r.date <= weekEndStr) {
-                                wTotal += r.total;
-                                wCorrect += r.correct;
-                            }
-                        })
-                    });
-                    
-                    points.push({ week: weekStartStr, acc: wTotal > 0 ? Math.round((wCorrect/wTotal)*100) : 0, q: wTotal, hasData: wTotal > 0 });
-                }
-                return points;
-            }, [filteredTopics]);
-
-            // Group by Subarea stats for table
-            const subareaStats = useMemo(() => {
-                const map = {};
-                filteredTopics.forEach(t => {
-                    const sub = t.subarea || 'Geral';
-                    if (!map[sub]) map[sub] = { name: sub, total: 0, correct: 0, qCount: 0, topicCount: 0 };
-                    
-                    const doneReviews = t.reviews.filter(r => r.done);
-                    map[sub].total += doneReviews.reduce((a, b) => a + b.total, 0);
-                    map[sub].correct += doneReviews.reduce((a, b) => a + b.correct, 0);
-                    map[sub].qCount += doneReviews.length;
-                    map[sub].topicCount += 1;
-                });
-                return Object.values(map).map(s => ({ ...s, acc: s.total > 0 ? Math.round((s.correct/s.total)*100) : 0 })).sort((a,b) => b.acc - a.acc);
-            }, [filteredTopics]);
-
-            const renderLineChart = () => {
-                const width = 100;
-                const height = 40;
-                const data = weeklyEvolution;
-                const hasAnyData = data.some(d => d.hasData);
-                
-                const points = data.map((d, i) => {
-                    const x = (i / (data.length - 1)) * width;
-                    const val = d.hasData ? d.acc : (hasAnyData ? 0 : 5);
-                    const y = height - (val / 100) * height;
-                    return `${x},${y}`;
-                }).join(' ');
-
-                return (
-                    <div className="relative w-full h-full" onMouseLeave={() => setHoveredPoint(null)}>
-                        <svg viewBox={`0 -5 ${width} ${height + 10}`} className="w-full h-full overflow-visible">
-                            <polyline fill="none" stroke={hasAnyData ? "#3b82f6" : "#e2e8f0"} strokeWidth="2" points={points} strokeLinecap="round" strokeLinejoin="round" />
-                            {data.map((d, i) => {
-                                const x = (i / (data.length - 1)) * width;
-                                const val = d.hasData ? d.acc : (hasAnyData ? 0 : 5);
-                                const y = height - (val / 100) * height;
-                                return d.hasData ? (
-                                    <circle 
-                                        key={i} 
-                                        cx={x} cy={y} r="3" 
-                                        fill="#2563eb" 
-                                        className="cursor-pointer hover:r-4 transition-all"
-                                        onMouseEnter={() => setHoveredPoint({ x, y, ...d })}
-                                    />
-                                ) : null
-                            })}
-                        </svg>
-                        {hoveredPoint && (
-                             <div className="absolute bg-slate-800 text-white text-xs rounded px-2 py-1 pointer-events-none transform -translate-x-1/2 -translate-y-full" style={{ left: `${hoveredPoint.x}%`, top: '0%' }}>
-                                <div className="font-bold">{hoveredPoint.acc}%</div>
-                                <div className="text-[10px] opacity-80">{hoveredPoint.q} questões</div>
-                            </div>
-                        )}
-                    </div>
-                );
-            };
-
-            return (
-                <div className="space-y-6 pb-32 animate-fade-in">
-                    <div className="flex justify-between items-center">
-                        <h3 className="font-bold text-slate-800 dark:text-white text-lg">Análise de Desempenho</h3>
-                         <button onClick={() => setIsFilterOpen(true)} className="px-4 py-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors shadow-sm">
-                            <Icons.Filter size={16}/> {selectedArea === 'all' ? 'Filtrar' : AREAS.find(a=>a.id===selectedArea)?.name}
-                        </button>
-                    </div>
-
-                    {/* KPI Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-                            <div className="flex justify-between items-start mb-2"><div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg"><Icons.Target size={18}/></div></div>
-                            <div className="text-2xl font-black text-slate-800 dark:text-white">{stats.totalQ}</div>
-                            <div className="text-xs text-slate-400 font-bold uppercase">Questões Feitas</div>
-                        </div>
-                        <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-                            <div className="flex justify-between items-start mb-2"><div className={`p-2 rounded-lg ${stats.globalAcc >= 80 ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-600'}`}><Icons.Activity size={18}/></div></div>
-                            <div className={`text-2xl font-black ${stats.globalAcc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{stats.globalAcc}%</div>
-                            <div className="text-xs text-slate-400 font-bold uppercase">Taxa de Acerto</div>
-                        </div>
-                        <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-                            <div className="flex justify-between items-start mb-2"><div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg"><Icons.CheckCircle2 size={18}/></div></div>
-                            <div className="text-2xl font-black text-slate-800 dark:text-white">{stats.reviewsCount}</div>
-                            <div className="text-xs text-slate-400 font-bold uppercase">Revisões Concluídas</div>
-                        </div>
-                         <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm">
-                            <div className="flex justify-between items-start mb-2"><div className="p-2 bg-slate-100 dark:bg-zinc-800 text-slate-600 rounded-lg"><Icons.Layers size={18}/></div></div>
-                            <div className="text-2xl font-black text-slate-800 dark:text-white">{filteredTopics.length}</div>
-                            <div className="text-xs text-slate-400 font-bold uppercase">Tópicos Ativos</div>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Weekly Evolution */}
-                        <div className="md:col-span-2 bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm">
-                             <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Icons.TrendingUp size={20} className="text-blue-500"/> Evolução Semanal</h3>
-                            </div>
-                            <div className="h-40 w-full">
-                                {renderLineChart()}
-                            </div>
-                            <div className="flex justify-between text-[10px] text-slate-400 mt-2 font-mono uppercase">
-                                <span>8 semanas atrás</span>
-                                <span>Hoje</span>
-                            </div>
-                        </div>
-
-                        {/* Top Subareas */}
-                        <div className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm flex flex-col">
-                             <h3 className="font-bold text-slate-800 dark:text-white mb-4">Top Subáreas</h3>
-                             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-2 max-h-60">
-                                {subareaStats.slice(0, 5).map(s => (
-                                    <div key={s.name} className="flex justify-between items-center">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-bold text-slate-700 dark:text-slate-300 truncate">{s.name}</div>
-                                            <div className="text-[10px] text-slate-400">{s.total}q</div>
-                                        </div>
-                                        <div className={`text-sm font-bold ${s.acc >= 80 ? 'text-emerald-500' : s.acc >= 60 ? 'text-amber-500' : 'text-red-500'}`}>{s.acc}%</div>
-                                    </div>
-                                ))}
-                                {subareaStats.length === 0 && <div className="text-xs text-slate-400 text-center py-4">Sem dados.</div>}
-                             </div>
-                        </div>
-                    </div>
-
-                    {/* Breakdown Table */}
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-slate-100 dark:border-zinc-800">
-                             <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Icons.List size={20}/> Desempenho Detalhado por Tópico</h3>
-                        </div>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-50 dark:bg-zinc-950 text-slate-500 uppercase text-[10px] font-bold">
-                                    <tr>
-                                        <th className="p-4 min-w-[200px]">Tópico</th>
-                                        <th className="p-4 text-center">Área</th>
-                                        <th className="p-4 text-center">Questões</th>
-                                        <th className="p-4 min-w-[150px]">Histórico</th>
-                                        <th className="p-4 text-right">Taxa %</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                                    {filteredTopics.map(t => {
-                                        const done = t.reviews.filter(r => r.done);
-                                        const tTotal = done.reduce((a, b) => a + b.total, 0);
-                                        const tCorrect = done.reduce((a, b) => a + b.correct, 0);
-                                        const tAcc = tTotal > 0 ? Math.round((tCorrect/tTotal)*100) : 0;
-                                        const aColor = AREAS.find(a => a.id === t.area)?.color || 'bg-slate-100 text-slate-500';
-                                        
-                                        return (
-                                            <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                                <td className="p-4 font-medium text-slate-800 dark:text-slate-200">{t.title} <div className="text-[10px] text-slate-400 font-normal">{t.subarea || 'Geral'}</div></td>
-                                                <td className="p-4 text-center"><span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${aColor}`}>{t.area.substring(0,3)}</span></td>
-                                                <td className="p-4 text-center text-slate-600 dark:text-slate-400">{tTotal}</td>
-                                                <td className="p-4">
-                                                    <div className="flex gap-1 overflow-x-auto no-scrollbar max-w-[150px] mask-right">
-                                                        {done.length > 0 ? done.slice().reverse().map((r, i) => { // Show latest first
-                                                            const rAcc = r.total > 0 ? Math.round((r.correct/r.total)*100) : 0;
-                                                            const color = rAcc >= 80 ? 'bg-emerald-500' : rAcc >= 60 ? 'bg-amber-500' : 'bg-red-500';
-                                                            return (
-                                                                <div key={i} className={`min-w-[24px] h-6 rounded flex items-center justify-center text-[10px] font-bold text-white ${color}`} title={`${r.label}: ${rAcc}%`}>
-                                                                    {rAcc}
-                                                                </div>
-                                                            )
-                                                        }) : <span className="text-[10px] text-slate-300">-</span>}
-                                                    </div>
-                                                </td>
-                                                <td className="p-4 text-right font-bold">
-                                                    <span className={tAcc >= 80 ? 'text-emerald-500' : tAcc >= 60 ? 'text-amber-500' : 'text-slate-400'}>{tTotal > 0 ? tAcc + '%' : '-'}</span>
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                    {filteredTopics.length === 0 && (
-                                        <tr><td colSpan="5" className="p-8 text-center text-slate-400">Nenhum tópico encontrado com os filtros atuais.</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <AnalyticsFilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} area={selectedArea} subarea={selectedSubarea} setArea={setSelectedArea} setSubarea={setSelectedSubarea} />
-                </div>
-            )
-        };
-
-        const SimuladosView = ({ simulations, topics, onAddSimulation, onEditSimulation, onDeleteSimulation }) => {
-            const [isModalOpen, setIsModalOpen] = useState(false);
-            const [editingSim, setEditingSim] = useState(null);
-            const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-
-            const simData = useMemo(() => {
-                // Map simulations directly to chart data, limit to 20, sort by date
-                return simulations
-                    .sort((a,b) => a.date.localeCompare(b.date)) // Oldest first for chart left-to-right
-                    .slice(-20) // Last 20
-                    .map(s => ({
-                        id: s.id,
-                        date: s.date,
-                        acc: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0,
-                        label: s.exam
-                    }));
-            }, [simulations]);
-
+            const handleExport = () => { const dataStr = JSON.stringify({ topics, logs }, null, 2); const blob = new Blob([dataStr], { type: "application/json" }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `reviewflow_bkp_${getTodayStr()}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast("Backup exportado!"); };
+            const handleImport = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!Array.isArray(data.topics)) throw new Error("Formato inválido"); setTopics(prev => mergeItems(prev, data.topics)); if(data.logs) setLogs(prev => mergeItems(prev, data.logs)); showToast("Importado com sucesso!"); onClose(); } catch (err) { showToast("Erro na importação", "error"); } }; reader.readAsText(file); e.target.value = null; };
             return ( 
-                <div className="animate-fade-in pb-32 lg:pb-0 space-y-6"> 
-                    <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-white/5 shadow-sm"> 
-                        <div className="flex justify-between items-center mb-6"> 
-                            <h3 className="font-bold text-slate-800 dark:text-white flex items-center gap-2"><Icons.TrendingUp size={20} className="text-blue-500"/> Evolução Simulados</h3> 
-                            <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2"><Icons.Plus size={14}/> Novo Simulado</button> 
-                        </div> 
-                        <div className="h-40 flex items-end gap-2 overflow-x-auto no-scrollbar"> 
-                            {simData.length > 0 ? simData.map((d) => ( 
-                                <div key={d.id} className="flex-1 min-w-[30px] flex flex-col justify-end group relative h-full"> 
-                                    <div className="bg-blue-500 w-full rounded-t-md hover:bg-blue-600 transition-all relative" style={{height: `${Math.max(d.acc, 10)}%`}}> 
-                                        <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-slate-600 dark:text-slate-300 opacity-0 group-hover:opacity-100">{d.acc}%</span> 
-                                    </div> 
-                                    <div className="text-[10px] text-center mt-2 text-slate-400 truncate w-full overflow-hidden">{formatDate(d.date)}</div> 
-                                </div> 
-                            )) : <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">Nenhum dado ainda.</div>} 
-                        </div> 
+                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Configurações"> 
+                    <div className="p-6 space-y-6"> 
+                        <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50"> 
+                            <h4 className="font-bold text-sm text-blue-700 dark:text-blue-300 mb-3 flex items-center gap-2"><Icons.Cloud size={16}/> Sincronização Nuvem</h4> 
+                            <div className="space-y-3"> 
+                                <div><label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Chave de Acesso (Sync Key)</label><div className="flex gap-2"><input type="text" value={tempKey} onChange={e => setTempKey(e.target.value)} placeholder="Crie uma senha única" className="flex-1 p-2 rounded-lg bg-white dark:bg-zinc-950 border border-slate-200 dark:border-zinc-700 text-sm dark:text-white font-mono" /><button onClick={() => { setSyncKey(tempKey); onClose(); showToast("Chave salva!"); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded-lg font-bold text-xs">Salvar</button></div><p className="text-[10px] text-slate-400 mt-1">⚠️ Salve esta chave! Se você perder, perderá seus dados.</p></div> 
+                                <div className="flex items-center justify-between"><div className="flex items-center gap-2 text-xs"><div className={`w-2 h-2 rounded-full ${status === 'online' ? 'bg-emerald-500' : 'bg-slate-400'}`}></div><span className="text-slate-500 dark:text-slate-400">{status === 'online' ? 'Conectado' : status === 'error' ? 'Erro de Conexão' : 'Desconectado'}</span></div></div>
+                            </div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-slate-100 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700">
+                            <h4 className="font-bold text-xs text-slate-500 uppercase mb-2">Status do Sistema</h4>
+                            <div className="text-xs font-mono text-slate-600 dark:text-slate-400 break-all">App ID: {appId}<br/>User ID: {user ? (user.isAnonymous ? 'Anon' : 'Auth') : '...'}</div>
+                        </div>
+                        <div className="p-4 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-100 dark:border-zinc-700"> <h4 className="font-bold text-sm text-slate-700 dark:text-slate-200 mb-2 flex items-center gap-2"><Icons.FileJson size={16}/> Backup Local</h4> <div className="flex gap-2"><button onClick={handleExport} className="flex-1 bg-white dark:bg-zinc-700 hover:bg-slate-100 text-slate-700 dark:text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 border border-slate-200 dark:border-zinc-600"><Icons.Download size={14}/> Exportar</button><label className="flex-1 bg-slate-800 hover:bg-slate-900 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"><Icons.Upload size={14}/> Importar <input type="file" accept=".json" className="hidden" onChange={handleImport}/></label></div> </div> 
                     </div> 
-                    <div className="space-y-3"> 
-                        <h3 className="font-bold text-slate-800 dark:text-white">Histórico</h3> 
-                        {simulations.length === 0 ? <div className="text-center text-slate-400 py-8">Nenhum simulado registrado.</div> : simulations.sort((a,b) => b.date.localeCompare(a.date)).map(s => ( 
-                            <div key={s.id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 flex justify-between items-center group"> 
-                                <div className="flex-1"> 
-                                    <div className="font-bold text-slate-800 dark:text-white">{s.exam} ({s.year})</div> 
-                                    <div className="text-xs text-slate-500">{formatFullDate(s.date)}</div> 
-                                    {s.difficultTopics && s.difficultTopics.length > 0 && ( 
-                                        <div className="mt-1 flex gap-1 flex-wrap"> 
-                                            {s.difficultTopics.map(tid => { const t = topics.find(x => x.id === tid); return t ? <span key={tid} className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/20 text-red-600 text-[10px] rounded border border-red-100 dark:border-red-900/30">Reforço: {t.title}</span> : null; })} 
-                                        </div> 
-                                    )} 
-                                </div> 
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right"> 
-                                        <div className={`text-xl font-black ${s.correct/s.total >= 0.8 ? 'text-emerald-500' : 'text-amber-500'}`}>{Math.round((s.correct/s.total)*100)}%</div> 
-                                        <div className="text-[10px] text-slate-400">{s.correct}/{s.total}</div> 
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => setEditingSim(s)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg"><Icons.Edit size={16}/></button>
-                                        <button onClick={() => setDeleteConfirmId(s.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-slate-50 dark:hover:bg-zinc-800 rounded-lg"><Icons.Trash2 size={16}/></button>
-                                    </div>
-                                </div> 
-                            </div> 
-                        ))} 
-                    </div> 
-                    <AddSimulationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={onAddSimulation} existingTopics={topics} /> 
-                    <EditSimulationModal isOpen={!!editingSim} onClose={() => setEditingSim(null)} onSave={onEditSimulation} existingTopics={topics} simulation={editingSim} />
-                    {deleteConfirmId && ( <ModalWrapper isOpen={!!deleteConfirmId} onClose={() => setDeleteConfirmId(null)} title="Excluir Simulado?"> <div className="p-6 text-center"> <p className="text-slate-600 dark:text-slate-300 mb-6">Tem certeza que deseja excluir este simulado? Essa ação não pode ser desfeita.</p> <div className="flex gap-3"> <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3 rounded-xl bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300 font-bold">Cancelar</button> <button onClick={() => { onDeleteSimulation(deleteConfirmId); setDeleteConfirmId(null); }} className="flex-1 py-3 rounded-xl bg-red-500 text-white font-bold">Excluir</button> </div> </div> </ModalWrapper> )}
-                </div> 
+                </ModalWrapper> 
             );
         };
 
@@ -689,35 +318,257 @@
                     <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-between"><div className="flex justify-between items-start"><div className="w-8 h-8 rounded-full bg-purple-50 dark:bg-purple-900/20 text-purple-500 flex items-center justify-center"><Icons.Plus size={16}/></div><span className="text-xs font-bold text-slate-400 uppercase">Semana</span></div><div><div className="text-2xl font-black text-slate-800 dark:text-white mt-2">{newThisWeek}</div><div className="text-xs text-slate-500">Novos Tópicos</div></div></div>
                 </div>
             )
+        }
+
+        const DiaryWidget = ({ logs, topics }) => {
+            const streak = useMemo(() => { let currentStreak = 0; const today = new Date(); let d = new Date(today); const todayStr = d.toISOString().split('T')[0]; const todayActive = logs.some(l => l.date === todayStr && !l.deleted && l.type === 'checklist'); if (!todayActive) d.setDate(d.getDate() - 1); while (true) { const dateStr = d.toISOString().split('T')[0]; if (logs.some(l => l.date === dateStr && !l.deleted && l.type === 'checklist')) { currentStreak++; d.setDate(d.getDate() - 1); } else break; } return currentStreak; }, [logs]);
+            const upcomingReviews = useMemo(() => { const upcoming = []; const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); const tomorrowStr = tomorrow.toISOString().split('T')[0]; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach(r => { if (!r.done && r.date >= tomorrowStr) upcoming.push({ topic: t, review: r }); }); }); return upcoming.sort((a, b) => a.review.date.localeCompare(b.review.date)).slice(0, 5); }, [topics]);
+            return ( <div className="space-y-6"> <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 relative overflow-hidden"> <Icons.Flame className="absolute right-4 bottom-4 opacity-20" size={80}/> <div className="relative z-10"> <div className="text-indigo-100 text-sm font-bold mb-1 uppercase">Sequência Atual</div> <div className="text-5xl font-black tracking-tighter">{streak} <span className="text-2xl">dias</span></div> <div className="text-indigo-100 text-xs mt-2 font-medium">Mantenha o foco! 🔥</div> </div> </div> <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm"> <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><Icons.Calendar size={18} className="text-blue-500"/> Próximas Revisões</h3> <div className="space-y-3">{upcomingReviews.length === 0 ? (<p className="text-center text-slate-400 text-sm py-4">Nada agendado para breve.</p>) : (upcomingReviews.map((item, i) => { const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; return ( <div key={i} className="flex items-start gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors"> <div className={`w-1.5 h-1.5 rounded-full mt-2 bg-${c}-500`}></div> <div className="flex-1 min-w-0"> <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">{formatDate(item.review.date)}</div> <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{item.topic.title}</div> <div className="text-xs text-slate-500">{item.review.label}</div> </div> </div> ) }))}</div> </div> </div> );
+        }
+
+        const DiaryView = ({ logs, onAddLog, onDeleteLog, topics }) => {
+            const [selectedDate, setSelectedDate] = useState(getTodayStr());
+            const { showToast } = useContext(ToastContext);
+            const scrollRef = useRef(null);
+            useEffect(() => { if(scrollRef.current) scrollRef.current.scrollLeft = scrollRef.current.scrollWidth; }, []); 
+            const changeDate = (days) => { const d = new Date(selectedDate + 'T12:00:00'); d.setDate(d.getDate() + days); setSelectedDate(d.toISOString().split('T')[0]); };
+            const getStatus = (date) => { const dayLogs = logs.filter(l => l.date === date && !l.deleted && l.type === 'checklist'); return { questions: dayLogs.some(l => l.desc === 'Questões'), anki: dayLogs.some(l => l.desc === 'Anki'), class: dayLogs.some(l => l.desc === 'Aula') }; };
+            const toggleChecklist = (item) => { vibrate(VIBRATE_PATTERNS.tick); const status = getStatus(selectedDate); const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class']; if (isDone) { const logToRemove = logs.find(l => l.date === selectedDate && !l.deleted && l.type === 'checklist' && l.desc === item); if (logToRemove) onDeleteLog(logToRemove.id); } else { onAddLog({ id: generateId(), date: selectedDate, type: 'checklist', desc: item, val: '1', updatedAt: Date.now(), deleted: false }); vibrate(VIBRATE_PATTERNS.success); showToast(`${item} registrado!`); triggerConfetti(); } };
+            const status = getStatus(selectedDate);
+            const heatmapData = useMemo(() => { const today = new Date(); const data = []; let minDate = new Date(); minDate.setDate(minDate.getDate() - 30); if (logs.length > 0) { const dates = logs.map(l => new Date(l.date)); const earliest = new Date(Math.min(...dates)); if (earliest < minDate) minDate = earliest; } const diffTime = Math.abs(today - minDate); const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; for (let i = 0; i < diffDays; i++) { const d = new Date(minDate); d.setDate(d.getDate() + i); const dateStr = d.toISOString().split('T')[0]; const dayLogs = logs.filter(l => l.date === dateStr && !l.deleted && l.type === 'checklist'); const count = dayLogs.length; let type = 'none'; let tooltip = ''; if (count > 0) { const descs = dayLogs.map(l => l.desc); tooltip = descs.join(', '); const hasQ = dayLogs.some(l => l.desc === 'Questões'); const hasA = dayLogs.some(l => l.desc === 'Anki'); const hasC = dayLogs.some(l => l.desc === 'Aula'); if (hasQ && !hasA && !hasC) type = 'questions'; else if (!hasQ && hasA && !hasC) type = 'anki'; else if (!hasQ && !hasA && hasC) type = 'class'; else type = 'mixed'; } data.push({ date: dateStr, count, type, tooltip }); } return data; }, [logs]);
+            const getHeatmapColor = (item) => { if (item.count === 0) return 'bg-slate-100 dark:bg-zinc-800'; if (item.type === 'questions') return 'bg-blue-500'; if (item.type === 'anki') return 'bg-purple-500'; if (item.type === 'class') return 'bg-red-500'; return 'bg-emerald-500'; };
+            return ( <div className="animate-fade-in space-y-6 pb-32 lg:pb-0"> <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden"> <div ref={scrollRef} className="flex gap-1 overflow-x-auto no-scrollbar pb-2"> <div className="flex gap-1 flex-wrap h-32 content-start flex-col"> {heatmapData.map((day, i) => ( <div key={day.date} className={`w-3 h-3 rounded-sm ${getHeatmapColor(day)}`} title={`${formatDate(day.date)}: ${day.tooltip || 'Sem atividades'}`}></div> ))} </div> </div> <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1"><span>Início</span><span>Hoje</span></div> </div> <div className="flex items-center justify-between bg-slate-100 dark:bg-zinc-800/50 p-2 rounded-xl"> <button onClick={() => changeDate(-1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors"><Icons.ChevronLeft size={20} className="text-slate-500"/></button> <div className="font-bold text-slate-700 dark:text-slate-200">{selectedDate === getTodayStr() ? 'Hoje, ' : ''}{formatFullDate(selectedDate)}</div> <button onClick={() => changeDate(1)} className="p-2 hover:bg-white dark:hover:bg-zinc-700 rounded-lg transition-colors" disabled={selectedDate >= getTodayStr()}><Icons.ChevronRight size={20} className={selectedDate >= getTodayStr() ? "text-slate-300 dark:text-zinc-800" : "text-slate-500"}/></button> </div> <div className="grid grid-cols-1 gap-3"> {['Questões', 'Anki', 'Aula'].map(item => { const isDone = status[item === 'Questões' ? 'questions' : item === 'Anki' ? 'anki' : 'class']; const config = { 'Questões': { icon: Icons.Target, color: 'blue' }, 'Anki': { icon: Icons.Layers, color: 'purple' }, 'Aula': { icon: Icons.MonitorPlay, color: 'red' } }[item]; const Icon = config.icon; return ( <button key={item} onClick={() => toggleChecklist(item)} className={`relative p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between group active:scale-[0.98] ${isDone ? `bg-${config.color}-50 dark:bg-${config.color}-900/20 border-${config.color}-500 dark:border-${config.color}-500` : 'bg-white dark:bg-zinc-900 border-slate-100 dark:border-zinc-800 hover:border-slate-200 dark:hover:border-zinc-700'}`}> <div className="flex items-center gap-4"> <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${isDone ? `bg-${config.color}-500 text-white` : `bg-slate-100 dark:bg-zinc-800 text-slate-400 dark:text-zinc-600`}`}><Icon size={24} strokeWidth={isDone ? 3 : 2} /></div> <div className="text-left"> <div className={`text-lg font-bold transition-colors ${isDone ? `text-${config.color}-700 dark:text-${config.color}-300` : 'text-slate-700 dark:text-slate-300'}`}>{item}</div> <div className="text-xs font-medium text-slate-400 dark:text-slate-500">{isDone ? 'Concluído!' : 'Toque para marcar'}</div> </div> </div> <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${isDone ? `bg-${config.color}-500 border-${config.color}-500` : 'border-slate-300 dark:border-zinc-600'}`}>{isDone && <Icons.CheckCircle2 size={14} className="text-white" strokeWidth={4} />}</div> </button> ); })} </div> </div> );
         };
 
-        const MainContentView = React.memo(({ view, topics, logs, simulations, onSelectDashboardArea, selectedDashboardArea, onOpenReview, onAddLog, onDeleteLog, onAddSimulation, onEditSimulation, onDeleteSimulation, searchTerm, setSearchTerm, setFilterModalOpen, setSortModalOpen, filteredList, visibleCount, setVisibleCount, handleDelete, handleEdit }) => {
-             if (view === 'dashboard') return <AnalyticsDashboard topics={topics} />; 
-             if (view === 'calendar') return <CalendarView topics={topics} onOpenReview={onOpenReview} />;
-             if (view === 'diary') return <DiaryView logs={logs} onAddLog={onAddLog} onDeleteLog={onDeleteLog} topics={topics} />;
-             if (view === 'simulations') return <SimuladosView simulations={simulations} topics={topics} onAddSimulation={onAddSimulation} onEditSimulation={onEditSimulation} onDeleteSimulation={onDeleteSimulation} />;
-             
-             return (
-                 <>
-                    <div className="hidden lg:block"><DashboardSummary topics={topics} /></div>
-                    <div className="flex flex-col gap-3 mb-6">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                            <div className="hidden lg:block relative flex-1"><Icons.Search className="absolute left-3 top-3 text-slate-400" size={18}/><input type="text" placeholder="Buscar assunto..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
-                            <div className="hidden lg:flex gap-2">
-                                <button onClick={() => setFilterModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"><Icons.Filter size={16}/> Filtrar</button>
-                                <button onClick={() => setSortModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"><Icons.SortAsc size={16}/> Ordenar</button>
+        const CalendarView = ({ topics, onOpenReview }) => { const [displayDate, setDisplayDate] = useState(new Date()); const [selectedDate, setSelectedDate] = useState(null); const currentMonth = displayDate.getMonth(); const currentYear = displayDate.getFullYear(); const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate(); const startDay = new Date(currentYear, currentMonth, 1).getDay(); const days = Array(startDay).fill(null).concat([...Array(daysInMonth).keys()].map(i => i + 1)); const prevMonth = () => setDisplayDate(new Date(currentYear, currentMonth - 1, 1)); const nextMonth = () => setDisplayDate(new Date(currentYear, currentMonth + 1, 1)); const goToday = () => setDisplayDate(new Date()); const getReviewsForDate = (dateStr) => { const list = []; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach((r, idx) => { if (r.date === dateStr) list.push({ topic: t, review: r, idx }); }); }); return list; }; return ( <div className="animate-fade-in pb-32 lg:pb-0 flex flex-col lg:flex-row gap-6 h-full"> <div className="flex-1 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm p-6 h-fit"> <div className="flex items-center justify-between mb-6"> <h3 className="text-xl font-bold text-slate-800 dark:text-white capitalize flex items-center gap-2">{displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h3> <div className="flex gap-1"> <button aria-label="Mês anterior" onClick={prevMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronLeft size={20}/></button> <button onClick={goToday} className="px-3 py-1 text-xs font-bold bg-slate-100 dark:bg-zinc-800 rounded-lg hover:bg-slate-200 dark:hover:bg-zinc-700">Hoje</button> <button aria-label="Próximo mês" onClick={nextMonth} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.ChevronRight size={20}/></button> </div> </div> <div className="grid grid-cols-7 gap-2 mb-2">{['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => <div key={i} className="text-center text-xs font-bold text-slate-400">{d}</div>)}</div> <div className="grid grid-cols-7 gap-2"> {days.map((day, idx) => { if (!day) return <div key={idx} className="aspect-square"></div>; const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`; const reviews = getReviewsForDate(dateStr); const isToday = dateStr === getTodayStr(); const pending = reviews.filter(x => !x.review.done).length; const done = reviews.filter(x => x.review.done).length; const hasDots = pending > 0 || done > 0; return ( <button key={idx} onClick={() => setSelectedDate(selectedDate === dateStr ? null : dateStr)} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative transition-all ${selectedDate === dateStr ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 z-10' : isToday ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-slate-50 dark:bg-zinc-950 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-zinc-800'}`}> <span className={`text-sm font-bold`}>{day}</span> {hasDots && (<div className="flex gap-0.5 mt-1 max-w-[80%] flex-wrap justify-center">{[...Array(Math.min(3, pending))].map((_, i) => <div key={`p${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-white/70' : 'bg-blue-500'}`}></div>)}{[...Array(Math.min(3, done))].map((_, i) => <div key={`d${i}`} className={`w-1 h-1 rounded-full ${selectedDate === dateStr ? 'bg-emerald-300' : 'bg-emerald-500'}`}></div>)}</div>)} </button> ); })} </div> </div> {selectedDate && ( <div className="flex-1 lg:max-w-md animate-fade-in"> <div className="bg-slate-50 dark:bg-zinc-900/50 rounded-3xl p-6 border border-slate-200 dark:border-white/5 h-full flex flex-col"> <h4 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2 mb-4"><Icons.CalendarCheck size={20} className="text-blue-500"/> {formatFullDate(selectedDate)}</h4> <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1"> {getReviewsForDate(selectedDate).length === 0 ? ( <div className="text-center text-slate-400 py-8 flex flex-col items-center justify-center h-40"> <Icons.Coffee size={32} className="mb-2 opacity-50"/> <p>Nada agendado para este dia.</p> </div> ) : ( getReviewsForDate(selectedDate).map((item, i) => { const areaInfo = AREAS.find(a => a.id === item.topic.area) || AREAS[0]; const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; const acc = item.review.total > 0 ? Math.round((item.review.correct / item.review.total) * 100) : 0; return ( <div key={i} className={`p-4 rounded-xl border relative overflow-hidden bg-white dark:bg-zinc-900 border-slate-200 dark:border-${c}-500/30 shadow-sm`}> <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div> <div className="flex justify-between items-start pl-3"> <div className="flex-1"> <div className="flex items-center gap-2 mb-1"> <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${areaInfo.color}`}>{areaInfo.name.toUpperCase()}</span> {item.topic.importance === 'high' && <span className="text-red-500 text-[10px] flex items-center"><Icons.Star size={10} fill="currentColor"/></span>} </div> <div className="font-bold text-slate-800 dark:text-white leading-tight mb-1">{item.topic.title}</div> <div className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5"> <span className="font-bold bg-slate-100 dark:bg-zinc-800 px-1.5 rounded text-slate-600 dark:text-slate-300">{item.review.label.split(':')[0]}</span> <span>{item.review.label.split(':')[1]} • {item.review.done ? `${item.review.correct}/${item.review.total} acertos` : `Meta: ${item.review.targetQ}q`}</span> </div> </div> <div className="flex flex-col items-end gap-2"> {item.review.done ? (<><span className={`text-sm font-black ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</span></>) : (<button onClick={() => { onOpenReview(item.topic.id, item.idx); }} className="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg shadow-blue-500/20 shadow-lg">Revisar</button>)} </div> </div> </div> ); }) )} </div> </div> </div> )} </div> ); };
+
+        const AddTopicModal = ({ isOpen, onClose, onSave }) => { if (!isOpen) return null; const [title, setTitle] = useState(''); const [area, setArea] = useState('clinica'); const [subarea, setSubarea] = useState(''); const [importance, setImportance] = useState('medium'); const [date, setDate] = useState(getTodayStr()); const [link, setLink] = useState(''); const { showToast } = useContext(ToastContext); const handleSubmit = (e) => { e.preventDefault(); if(!title) return; vibrate(VIBRATE_PATTERNS.tick); onSave({ title, area, subarea, importance, date, link }); showToast("Tópico criado com sucesso!"); setTitle(''); setSubarea(''); setLink(''); onClose(); }; return ( <ModalWrapper isOpen={isOpen} onClose={onClose} title="Novo Conteúdo"> <div className="p-6 space-y-5"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label> <input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /> </div> <div className="grid grid-cols-2 gap-4"> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select> </div> <div> <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label> <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{(SUB_AREAS[area]||[]).map(s => <option key={s} value={s}>{s}</option>)}</select> </div> </div> <div className="space-y-3"> <label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label> <div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div> </div> <div className="grid grid-cols-1 gap-4"> <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Data</label><input type="date" className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={date} onChange={e => setDate(e.target.value)} /></div> <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label><input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} /></div> </div> </div> <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> <button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Plus size={20}/> Criar Plano</button> </div> </ModalWrapper> ); };
+
+        const EditTopicModal = ({ isOpen, onClose, onSave, topic }) => { 
+            if (!isOpen || !topic) return null;
+            const [title, setTitle] = useState(topic.title); 
+            const [area, setArea] = useState(topic.area); 
+            const [subarea, setSubarea] = useState(topic.subarea || ''); 
+            const [importance, setImportance] = useState(topic.importance); 
+            const [link, setLink] = useState(topic.materialLink || ''); 
+            const { showToast } = useContext(ToastContext);
+            const handleSubmit = (e) => { 
+                e.preventDefault(); 
+                if(!title) return; 
+                vibrate(VIBRATE_PATTERNS.tick); 
+                onSave({ ...topic, title, area, subarea, importance, materialLink: link, updatedAt: Date.now() }); 
+                showToast("Tópico atualizado!"); 
+                onClose(); 
+            };
+            return ( 
+                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Editar Tópico"> 
+                    <div className="p-6 space-y-5"> 
+                        <div> 
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">O que você estudou?</label> 
+                            <input autoFocus type="text" placeholder="Ex: Insuficiência Cardíaca" className="w-full text-lg font-semibold bg-transparent border-b-2 border-slate-200 dark:border-zinc-700 focus:border-blue-500 outline-none py-2 placeholder-slate-300 dark:placeholder-zinc-600 dark:text-white transition-colors" value={title} onChange={e => setTitle(e.target.value)} /> 
+                        </div> 
+                        <div className="grid grid-cols-2 gap-4"> 
+                            <div> 
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Área</label> 
+                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={area} onChange={e => { setArea(e.target.value); setSubarea(''); }}>{AREAS.map(a => <option key={a.id} value={a.id}>{a.full}</option>)}</select> 
+                            </div> 
+                            <div> 
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Subárea</label> 
+                                <select className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm font-medium dark:text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none" value={subarea} onChange={e => setSubarea(e.target.value)}><option value="">Geral</option>{(SUB_AREAS[area]||[]).map(s => <option key={s} value={s}>{s}</option>)}</select> 
+                            </div> 
+                        </div> 
+                        <div className="space-y-3"> 
+                            <label className="block text-xs font-bold text-slate-500 uppercase">Prioridade</label> 
+                            <div className="grid grid-cols-3 gap-3">{IMPORTANCE_LEVELS.map(lvl => (<button key={lvl.id} type="button" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setImportance(lvl.id); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${importance === lvl.id ? `border-${lvl.color.split('-')[1]}-500 bg-${lvl.color.split('-')[1]}-50 dark:bg-${lvl.color.split('-')[1]}-900/30 ${lvl.color}` : 'border-slate-200 dark:border-zinc-700 text-slate-400 hover:border-slate-300'}`}>{lvl.label}</button>))}</div> 
+                        </div> 
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Link (Opcional)</label>
+                            <input type="url" placeholder="https://..." className="w-full p-3 rounded-xl bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-sm dark:text-slate-200 outline-none" value={link} onChange={e => setLink(e.target.value)} />
+                        </div> 
+                    </div> 
+                    <div className="p-4 border-t border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 rounded-b-2xl"> 
+                        <button onClick={handleSubmit} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] transition-all text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"><Icons.Save size={20}/> Salvar Alterações</button> 
+                    </div> 
+                </ModalWrapper> 
+            ); 
+        };
+
+        const TopicCard = React.memo(({ topic, onOpenReview, onDelete, onEdit }) => { const [expanded, setExpanded] = useState(false); const areaConfig = AREAS.find(a => a.id === topic.area) || AREAS[0]; const activeBorder = areaConfig.accent; const reviewsDone = topic.reviews.filter(r => r.done); const avgAccuracy = reviewsDone.length > 0 ? Math.round(reviewsDone.reduce((acc, r) => acc + (r.correct/r.total), 0) / reviewsDone.length * 100) : 0; const isLate = topic.reviews.find(r => !r.done && r.date < getTodayStr()); const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[topic.area] || 'blue'; const touchStartX = useRef(0); const touchEndX = useRef(0); return ( <div className={`group bg-white dark:bg-zinc-900 rounded-2xl border-l-[6px] ${activeBorder} shadow-sm hover:shadow-xl dark:shadow-black/50 transition-all duration-300 mb-4 overflow-hidden relative border-y border-r border-slate-100 dark:border-${c}-900/50`} onTouchStart={e => touchStartX.current = e.targetTouches[0].clientX} onTouchMove={e => touchEndX.current = e.targetTouches[0].clientX} onTouchEnd={() => { if (touchEndX.current - touchStartX.current > 100) { const nextReviewIndex = topic.reviews.findIndex(r => !r.done); if (nextReviewIndex !== -1) { vibrate(VIBRATE_PATTERNS.tick); onOpenReview(topic.id, nextReviewIndex); } } }}> <div className="p-4 cursor-pointer" onClick={() => setExpanded(!expanded)}> <div className="flex justify-between items-start"> <div className="flex-1 pr-4"> <div className="flex items-center gap-2 mb-1.5"> <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400 dark:text-slate-500">{areaConfig.name}{topic.subarea ? ` - ${topic.subarea}` : ''}</span> {topic.importance === 'high' && <span className="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Star size={10} fill="currentColor"/> Alta</span>} {isLate && <span className="bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5"><Icons.Clock size={10}/> Atrasado</span>} </div> <h3 className={`font-bold text-slate-800 dark:text-slate-100 text-lg leading-tight group-hover:text-${c}-600 dark:group-hover:text-${c}-400 transition-colors`}>{topic.title}</h3> </div> <div className="flex flex-col items-end gap-1.5"> {reviewsDone.length > 0 && ( <span className={`text-xs font-black px-2 py-0.5 rounded-full ${avgAccuracy >= 80 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>{avgAccuracy}%</span> )} <div className="flex gap-1"> {[0,1,2,3].map(i => { const rev = topic.reviews[i]; let color = 'bg-slate-200 dark:bg-zinc-800'; if (rev && rev.done) color = (rev.correct/rev.total) >= 0.8 ? 'bg-emerald-500' : 'bg-amber-500'; else if (rev && !rev.done && (i === 0 || topic.reviews[i-1].done)) color = `bg-${c}-500 animate-pulse`; return <div key={i} className={`w-1.5 h-1.5 rounded-full ${color}`}></div> })} </div> </div> </div> </div> {expanded && ( <div className="px-4 pb-4 pt-0 bg-slate-50/50 dark:bg-zinc-950/30 border-t border-slate-100 dark:border-zinc-800 animate-fade-in"> <div className="space-y-2 mt-3"> {topic.reviews.map((rev, idx) => { const isNext = !rev.done && (idx === 0 || topic.reviews[idx-1].done); const isDone = rev.done; const acc = rev.total > 0 ? Math.round((rev.correct/rev.total)*100) : 0; return ( <div key={idx} className={`flex items-center justify-between p-2.5 rounded-xl transition-colors ${isNext ? `bg-white dark:bg-zinc-800 shadow-sm border border-${c}-100 dark:border-${c}-900/30` : 'opacity-70'}`}> <div className="flex items-center gap-3"> <div className={`font-black text-xs w-6 ${isDone ? 'text-slate-400' : isNext ? `text-${c}-600 dark:text-${c}-400` : 'text-slate-300'}`}>{rev.label.split(':')[0]}</div> <div className="flex flex-col"> <span className={`text-xs font-medium ${!isDone && rev.date < getTodayStr() ? 'text-orange-600 dark:text-orange-400' : 'text-slate-600 dark:text-slate-300'}`}>{formatDate(rev.date)}</span> {rev.targetQ && !isDone && <span className="text-[10px] text-blue-500 font-bold flex items-center gap-1"><Icons.Target size={10}/> Meta: {rev.targetQ}q</span>} </div> </div> {isDone ? ( <div className={`font-bold text-sm ${acc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{acc}%</div> ) : isNext ? ( <button onClick={(e) => {e.stopPropagation(); onOpenReview(topic.id, idx); vibrate(VIBRATE_PATTERNS.tick);}} className={`bg-${c}-600 hover:bg-${c}-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-${c}-500/20 active:scale-95 transition-transform`}>Revisar</button> ) : ( <Icons.Lock size={14} className="text-slate-300 dark:text-zinc-700"/> )} </div> ) })} </div> <div className="mt-4 pt-3 border-t border-slate-200 dark:border-zinc-800 flex justify-between items-center"> {topic.materialLink ? ( <a href={topic.materialLink} target="_blank" className="text-xs font-bold text-blue-500 hover:underline flex items-center gap-1"><Icons.LinkIcon size={12}/> Material</a> ) : <div></div>} <div className="flex gap-2"> <button onClick={(e) => { e.stopPropagation(); onEdit(topic.id); }} className="text-xs text-slate-500 hover:text-blue-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded"><Icons.Edit size={12}/> Editar</button> <button onClick={(e) => { e.stopPropagation(); onDelete(topic.id); }} className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors px-2 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"><Icons.Trash2 size={12}/> Excluir</button> </div> </div> </div> )} <div className="absolute top-5 right-4 pointer-events-none text-slate-300 dark:text-zinc-600">{expanded ? <Icons.ChevronUp size={16}/> : <Icons.ChevronDown size={16}/>}</div> </div> ); }, (prev, next) => prev.topic.id === next.topic.id && prev.topic.updatedAt === next.topic.updatedAt);
+
+        const AreaDetailView = ({ areaId, onBack, topics }) => { 
+            const area = AREAS.find(a => a.id === areaId); 
+            const areaTopics = topics.filter(t => t.area === areaId && !t.deleted); 
+            
+            const subareas = useMemo(() => {
+                const groups = {};
+                areaTopics.forEach(t => {
+                    const sub = t.subarea || 'Geral';
+                    if (!groups[sub]) groups[sub] = { total: 0, correct: 0, count: 0 };
+                    const done = t.reviews.filter(r => r.done);
+                    groups[sub].total += done.reduce((acc, r) => acc + r.total, 0);
+                    groups[sub].correct += done.reduce((acc, r) => acc + r.correct, 0);
+                    groups[sub].count++;
+                });
+                return Object.entries(groups).map(([name, data]) => ({
+                    name,
+                    accuracy: data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0,
+                    count: data.count
+                })).sort((a, b) => b.accuracy - a.accuracy);
+            }, [areaTopics]);
+
+            const stats = useMemo(() => { 
+                const totalQ = areaTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0); 
+                const totalC = areaTopics.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); 
+                const globalAcc = totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0; 
+                return { totalQ, globalAcc }; 
+            }, [areaTopics]); 
+            
+            return ( 
+                <div className="animate-slide-in-right pb-32 lg:pb-0"> 
+                    <div className="flex items-center gap-3 mb-6">
+                        <button aria-label="Voltar" onClick={onBack} className="p-2 rounded-xl bg-white dark:bg-zinc-900 shadow-sm border border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300"><Icons.ArrowLeft size={20}/></button>
+                        <div><h2 className="text-xl font-bold text-slate-800 dark:text-white">{area.full}</h2><p className="text-xs text-slate-500">{areaTopics.length} tópicos cadastrados</p></div>
+                    </div> 
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm"><div className="text-xs text-slate-500 uppercase font-bold mb-1">Aproveitamento</div><div className={`text-3xl font-black ${stats.globalAcc >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{stats.globalAcc}%</div></div>
+                        <div className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-slate-200 dark:border-white/5 shadow-sm"><div className="text-xs text-slate-500 uppercase font-bold mb-1">Questões</div><div className="text-3xl font-black text-slate-800 dark:text-white">{stats.totalQ}</div></div>
+                    </div>
+                    
+                    <div className="mb-6">
+                         <h3 className="font-bold text-slate-800 dark:text-white mb-3 text-sm">Desempenho por Subárea</h3>
+                         <div className="space-y-2">
+                            {subareas.map((sub) => (
+                                <div key={sub.name} className="flex justify-between items-center bg-slate-50 dark:bg-zinc-800/50 p-3 rounded-xl border border-slate-100 dark:border-zinc-700">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{sub.name} <span className="text-xs font-normal text-slate-400 ml-1">({sub.count})</span></span>
+                                    <span className={`text-sm font-bold ${sub.accuracy >= 80 ? 'text-emerald-500' : 'text-amber-500'}`}>{sub.accuracy}%</span>
+                                </div>
+                            ))}
+                         </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <h3 className="font-bold text-slate-800 dark:text-white mb-3 text-sm">Tópicos</h3>
+                        {areaTopics.length === 0 ? <div className="text-center text-slate-400 py-10">Nenhum tópico nesta área.</div> : areaTopics.map(t => { 
+                            const done = t.reviews.filter(r => r.done); 
+                            const tAcc = done.length > 0 ? Math.round(done.reduce((a,b)=>a+(b.correct/b.total),0)/done.length*100) : 0; 
+                            return ( <div key={t.id} className="bg-white dark:bg-zinc-900 p-4 rounded-xl border border-slate-200 dark:border-white/5 flex justify-between items-center cursor-default"><div className="flex-1 pr-2 overflow-hidden"><div className="font-bold text-slate-800 dark:text-slate-200 truncate">{t.title}</div><div className="text-xs text-slate-500">{done.length}/4 Revisões</div></div><div className={`font-bold text-lg ${tAcc >= 80 ? 'text-emerald-500' : tAcc >= 60 ? 'text-amber-500' : 'text-slate-400'}`}>{done.length > 0 ? tAcc + '%' : '-'}</div></div> ) 
+                        })}
+                    </div> 
+                </div> 
+            ); 
+        };
+
+        const BentoDashboard = ({ topics, onSelectArea }) => { 
+            const stats = useMemo(() => { 
+                const active = topics.filter(t => !t.deleted); 
+                const reviewsDone = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).length, 0); 
+                const totalQ = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0); 
+                const totalC = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); 
+                const globalAcc = totalQ > 0 ? Math.round((totalC/totalQ)*100) : 0; 
+                const areaStats = AREAS.map(a => { 
+                    const ts = active.filter(t => t.area === a.id); 
+                    const q = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.total || 0), 0), 0); 
+                    const c = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); 
+                    return { ...a, acc: q > 0 ? Math.round((c/q)*100) : 0, q }; 
+                }).sort((a,b) => b.acc - a.acc); 
+                
+                const last14Days = []; 
+                const today = new Date(); 
+                for(let i=13; i>=0; i--) { 
+                    const d = new Date(today); 
+                    d.setDate(d.getDate() - i); 
+                    const dStr = d.toISOString().split('T')[0]; 
+                    let dTotal = 0; 
+                    active.forEach(t => { 
+                        t.reviews.forEach(r => { 
+                            if(r.done && r.date === dStr) { dTotal += (r.total || 0); } 
+                        }) 
+                    }); 
+                    last14Days.push({date: dStr, total: dTotal}); 
+                } 
+                return { active: active.length, reviewsDone, totalQ, globalAcc, areaStats, last14Days }; 
+            }, [topics]); 
+            
+            return ( 
+                <div className="space-y-4 animate-fade-in pb-32 lg:pb-0"> 
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> 
+                        <div className="col-span-2 md:col-span-2 bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-slate-200 dark:border-white/5 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-end mb-4">
+                                <div>
+                                    <div className="text-slate-500 text-xs font-bold uppercase tracking-wide">Questões (14 Dias)</div>
+                                    <div className="text-3xl font-black text-slate-800 dark:text-white">{stats.totalQ} <span className="text-sm font-medium text-slate-400">total</span></div>
+                                </div>
+                                <Icons.BarChart3 className="text-blue-500 opacity-50" size={24}/>
+                            </div>
+                            <div className="flex items-end gap-1 h-24 w-full">
+                                {stats.last14Days.map((d, i) => (
+                                    <div key={i} className="flex-1 bg-blue-50 dark:bg-blue-900/10 rounded-t-sm relative group flex flex-col justify-end h-full">
+                                        <div 
+                                            className="bg-blue-500 rounded-t-sm w-full transition-all duration-500 hover:bg-blue-600" 
+                                            style={{height: `${d.total > 0 ? Math.max(15, (d.total / 50) * 100) : 0}%`}}
+                                        ></div>
+                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 bg-slate-800 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                            {formatDate(d.date)}: {d.total}q
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3"><Icons.CheckCircle2 size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.reviewsDone}</div><div className="text-xs text-slate-400 font-medium">Revisões</div></div> <div className="col-span-1 bg-white dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-center"><div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3"><Icons.Layers size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.active}</div><div className="text-xs text-slate-400 font-medium">Tópicos</div></div> </div> <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-white/5 shadow-sm p-6"><h3 className="font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2"><Icons.PieChart size={20} className="text-slate-400"/> Por Área</h3><div className="space-y-4">{stats.areaStats.map(area => (<div key={area.id} onClick={() => onSelectArea(area.id)} className="relative cursor-pointer group active:scale-[0.99] transition-transform"><div className="flex justify-between text-xs mb-1.5 font-bold"><span className="text-slate-600 dark:text-slate-300 group-hover:text-blue-500 transition-colors flex items-center gap-1">{area.name} <Icons.ChevronRight size={12} className="opacity-0 group-hover:opacity-100 transition-opacity"/></span><span className={area.acc >= 80 ? 'text-emerald-500' : area.acc >= 60 ? 'text-amber-500' : 'text-slate-400'}>{area.acc}%</span></div><div className="h-2.5 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden"><div className={`h-full rounded-full transition-all duration-500 ${area.acc >= 80 ? 'bg-emerald-500' : area.acc >= 60 ? 'bg-amber-500' : 'bg-slate-300 dark:bg-zinc-700'}`} style={{width: `${area.acc}%`}}></div></div></div>))}</div></div> </div> ); 
+        };
+
+        const FilterModal = ({ isOpen, onClose, filter, setFilter, areaFilter, setAreaFilter }) => {
+            if (!isOpen) return null;
+            return (
+                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Filtrar Conteúdo">
+                    <div className="p-6 space-y-6">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Período / Status</label>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button onClick={() => { setFilter('all'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'all' ? 'bg-slate-800 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Todos</button>
+                                <button onClick={() => { setFilter('today'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'today' ? 'bg-blue-600 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Hoje</button>
+                                <button onClick={() => { setFilter('high_priority'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${filter === 'high_priority' ? 'bg-red-600 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Alta Prior.</button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Área de Estudo</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button onClick={() => { setAreaFilter('all'); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${areaFilter === 'all' ? 'bg-slate-800 text-white border-transparent' : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>Todas</button>
+                                {AREAS.map(a => (
+                                    <button key={a.id} onClick={() => { setAreaFilter(a.id); onClose(); }} className={`py-3 rounded-xl text-sm font-bold border transition-all ${areaFilter === a.id ? `${a.color} border-transparent` : 'border-slate-200 dark:border-zinc-700 text-slate-500'}`}>{a.name}</button>
+                                ))}
                             </div>
                         </div>
                     </div>
-                    {filteredList.slice(0, visibleCount).length === 0 ? ( <div className="flex flex-col items-center justify-center py-20 text-center opacity-60"><div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700"><Icons.BookOpen size={32}/></div><h3 className="font-bold text-slate-700 dark:text-slate-300">Nada por aqui</h3><p className="text-sm text-slate-500">Adicione um novo tópico para começar.</p></div> ) : ( <> {filteredList.slice(0, visibleCount).map(t => ( <TopicCard key={t.id} topic={t} onOpenReview={onOpenReview} onDelete={handleDelete} onEdit={handleEdit} /> ))} {filteredList.length > visibleCount && ( <button onClick={() => setVisibleCount(c => c + 20)} className="w-full py-3 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-zinc-900 rounded-xl transition-colors"> Carregar Mais ({filteredList.length - visibleCount}) </button> )} </> )}
-                 </>
-             )
-        });
+                </ModalWrapper>
+            )
+        };
+
+        const SortModal = ({ isOpen, onClose, sortBy, setSortBy }) => {
+            if (!isOpen) return null;
+            return (
+                <ModalWrapper isOpen={isOpen} onClose={onClose} title="Ordenar Por">
+                    <div className="p-6 space-y-2">
+                        {[
+                            { id: 'date', label: '📅 Data de Revisão (Padrão)' },
+                            { id: 'importance', label: '⭐ Prioridade (Alta Primeiro)' },
+                            { id: 'created', label: '✨ Recentes (Criação)' },
+                            { id: 'title', label: '🔤 Título (A-Z)' }
+                        ].map(opt => (
+                            <button key={opt.id} onClick={() => { setSortBy(opt.id); onClose(); }} className={`w-full text-left py-4 px-4 rounded-xl font-bold text-sm flex justify-between items-center transition-colors ${sortBy === opt.id ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-600 dark:text-slate-300'}`}>
+                                {opt.label}
+                                {sortBy === opt.id && <Icons.CheckCircle2 size={18} />}
+                            </button>
+                        ))}
+                    </div>
+                </ModalWrapper>
+            )
+        };
 
         function App() {
             const [topics, setTopics] = useState([]); 
             const [logs, setLogs] = useState([]); 
-            const [simulations, setSimulations] = useState([]);
             const [dataLoaded, setDataLoaded] = useState(false);
             const [visibleCount, setVisibleCount] = useState(20);
             
@@ -726,10 +577,8 @@
                 try { 
                     const t = safeJSONParse('resiflow_v3_data', []); 
                     const l = safeJSONParse('resiflow_logs', []); 
-                    const s = safeJSONParse('resiflow_simulations', []);
                     setTopics(t); 
                     setLogs(l); 
-                    setSimulations(s);
                 } catch (e) { console.warn('Erro', e); } 
                 setDataLoaded(true); 
             }, [dataLoaded]);
@@ -749,7 +598,7 @@
             const [deleteConfirmId, setDeleteConfirmId] = useState(null); 
             const [selectedDashboardArea, setSelectedDashboardArea] = useState(null);
             
-            const { status, syncKey, setSyncKey, saveToCloud, appId, user } = useSync(topics, logs, simulations, setTopics, setLogs, setSimulations);
+            const { status, syncKey, setSyncKey, saveToCloud, appId, user } = useSync(topics, logs, setTopics, setLogs);
             
             const { showToast } = useContext(ToastContext);
             
@@ -757,27 +606,6 @@
             const [isSearchOpen, setIsSearchOpen] = useState(false);
             const [filterModalOpen, setFilterModalOpen] = useState(false);
             const [sortModalOpen, setSortModalOpen] = useState(false);
-
-            // SWIPE LOGIC
-            const touchStartX = useRef(0);
-            const touchEndX = useRef(0);
-            const viewsOrder = ['list', 'calendar', 'dashboard', 'diary', 'simulations'];
-
-            const handleTouchStart = (e) => { touchStartX.current = e.targetTouches[0].clientX; };
-            const handleTouchMove = (e) => { touchEndX.current = e.targetTouches[0].clientX; };
-            const handleTouchEnd = () => {
-                if(window.innerWidth >= 1024) return; // Disable on Desktop
-                const diff = touchStartX.current - touchEndX.current;
-                const threshold = 100;
-                if (Math.abs(diff) > threshold) {
-                    const currentIndex = viewsOrder.indexOf(view);
-                    if (diff > 0 && currentIndex < viewsOrder.length - 1) {
-                        setView(viewsOrder[currentIndex + 1]); // Swipe Left -> Next View
-                    } else if (diff < 0 && currentIndex > 0) {
-                        setView(viewsOrder[currentIndex - 1]); // Swipe Right -> Prev View
-                    }
-                }
-            };
 
             // Theme Logic
             useEffect(() => {
@@ -807,9 +635,8 @@
                 if (!dataLoaded) return;
                 localStorage.setItem('resiflow_v3_data', JSON.stringify(topics)); 
                 localStorage.setItem('resiflow_logs', JSON.stringify(logs)); 
-                localStorage.setItem('resiflow_simulations', JSON.stringify(simulations));
-                if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs, simulations), 2000); return () => clearTimeout(t); } 
-            }, [topics, logs, simulations, status, dataLoaded]);
+                if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs), 2000); return () => clearTimeout(t); } 
+            }, [topics, logs, status, dataLoaded]);
 
             useEffect(() => { setVisibleCount(20); }, [filter, areaFilter, searchTerm, view, sortBy]);
 
@@ -830,6 +657,8 @@
                 return list; 
             }, [topics, searchTerm, filter, areaFilter, sortBy]);
 
+            const visibleTopics = useMemo(() => filteredList.slice(0, visibleCount), [filteredList, visibleCount]);
+
             const handleAddTopic = (data) => { const schedule = generateSchedule(data.date, data.importance); const newTopic = { id: generateId(), title: data.title, area: data.area, subarea: data.subarea, importance: data.importance, materialLink: data.link, studyDate: data.date, reviews: schedule, deleted: false, updatedAt: Date.now() }; setTopics([newTopic, ...topics]); showToast("Tópico adicionado!"); };
             const handleUpdateTopic = (updatedTopic) => { setTopics(prev => prev.map(t => t.id === updatedTopic.id ? updatedTopic : t)); };
             const handleOpenReview = useCallback((topicId, reviewIdx) => { setTopics(currentTopics => { const topic = currentTopics.find(t => t.id === topicId); if (topic) { const review = topic.reviews[reviewIdx]; setReviewModalData({ topicId, reviewIdx, title: topic.title, label: review.label, target: review.targetQ }); } return currentTopics; }); }, []);
@@ -839,44 +668,32 @@
             const handleAddLog = (log) => setLogs([log, ...logs]);
             const handleDeleteLog = (id) => setLogs(prev => prev.map(l => l.id === id ? { ...l, deleted: true, updatedAt: Date.now() } : l));
             const handleReviewSave = (data) => { if(!reviewModalData) return; vibrate(VIBRATE_PATTERNS.reviewDone); triggerConfetti(); const { topicId, reviewIdx } = reviewModalData; setTopics(prev => prev.map(t => { if(t.id !== topicId) return t; const newRevs = [...t.reviews]; newRevs[reviewIdx] = { ...newRevs[reviewIdx], done: true, correct: data.correct, total: data.total }; if(reviewIdx + 1 < newRevs.length) { const acc = data.total > 0 ? data.correct/data.total : 0; const nextLoad = calculateNextLoad(t.importance, data.difficulty, newRevs[reviewIdx+1].type, acc); newRevs[reviewIdx+1].targetQ = nextLoad; } return { ...t, reviews: newRevs, updatedAt: Date.now() }; })); setReviewModalData(null); showToast("Revisão concluída!"); };
-            
-            const handleAddSimulation = (data) => {
-                const newSim = { id: generateId(), ...data };
-                setSimulations([newSim, ...simulations]);
-                if(data.difficultTopics.length > 0) {
-                    const nextWeekDate = new Date(new Date().setDate(new Date().getDate() + 2)).toISOString().split('T')[0];
-                    setTopics(prev => prev.map(t => {
-                        if(data.difficultTopics.includes(t.id)) {
-                            const newReviews = [...t.reviews, {
-                                type: 'REFORCO',
-                                date: nextWeekDate,
-                                label: 'Reforço: Simulado',
-                                done: false,
-                                correct: 0,
-                                total: 0,
-                                targetQ: 20
-                            }].sort((a,b) => a.date.localeCompare(b.date));
-                            return { ...t, reviews: newReviews, updatedAt: Date.now() };
-                        }
-                        return t;
-                    }));
-                    showToast(`Simulado salvo + ${data.difficultTopics.length} reforços criados!`);
-                } else {
-                    showToast("Simulado salvo!");
-                }
-            };
 
-            const handleUpdateSimulation = (updatedSim) => {
-                setSimulations(prev => prev.map(s => s.id === updatedSim.id ? updatedSim : s));
-                showToast("Simulado atualizado!");
-            };
+            if (!dataLoaded) return ( <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50 dark:bg-zinc-950 transition-opacity duration-300"> <div className="loader-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> </div> </div> );
 
-            const handleDeleteSimulation = (id) => {
-                setSimulations(prev => prev.filter(s => s.id !== id));
-                showToast("Simulado excluído!", "error");
+            const MainContent = () => {
+                if (view === 'dashboard') return selectedDashboardArea ? <AreaDetailView areaId={selectedDashboardArea} onBack={() => setSelectedDashboardArea(null)} topics={topics} /> : <BentoDashboard topics={topics} onSelectArea={setSelectedDashboardArea} />;
+                if (view === 'calendar') return <CalendarView topics={topics} onOpenReview={(tid, idx) => handleOpenReview(tid, idx)} />;
+                if (view === 'diary') return <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} topics={topics} />;
+                return (
+                    <>
+                        <div className="hidden lg:block"><DashboardSummary topics={topics} /></div>
+                        <div className="flex flex-col gap-3 mb-6">
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                {/* Desktop Search Bar */}
+                                <div className="hidden lg:block relative flex-1"><Icons.Search className="absolute left-3 top-3 text-slate-400" size={18}/><input type="text" placeholder="Buscar assunto..." className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm focus:ring-2 focus:ring-blue-500 outline-none dark:text-white" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
+                                
+                                {/* Desktop Buttons */}
+                                <div className="hidden lg:flex gap-2">
+                                    <button onClick={() => setFilterModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"><Icons.Filter size={16}/> Filtrar</button>
+                                    <button onClick={() => setSortModalOpen(true)} className="px-4 py-2.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/5 text-sm font-bold text-slate-600 dark:text-slate-300 flex items-center gap-2 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors"><Icons.SortAsc size={16}/> Ordenar</button>
+                                </div>
+                            </div>
+                        </div>
+                        {visibleTopics.length === 0 ? ( <div className="flex flex-col items-center justify-center py-20 text-center opacity-60"><div className="w-20 h-20 bg-slate-100 dark:bg-zinc-900 rounded-full flex items-center justify-center mb-4 text-slate-300 dark:text-zinc-700"><Icons.BookOpen size={32}/></div><h3 className="font-bold text-slate-700 dark:text-slate-300">Nada por aqui</h3><p className="text-sm text-slate-500">Adicione um novo tópico para começar.</p></div> ) : ( <> {visibleTopics.map(t => ( <TopicCard key={t.id} topic={t} onOpenReview={handleOpenReview} onDelete={handleDelete} onEdit={handleEdit} /> ))} {filteredList.length > visibleCount && ( <button onClick={() => setVisibleCount(c => c + 20)} className="w-full py-3 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 bg-slate-100 dark:bg-zinc-900 rounded-xl transition-colors"> Carregar Mais ({filteredList.length - visibleCount}) </button> )} </> )}
+                    </>
+                );
             };
-
-            if (!dataLoaded) return ( <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-slate-50 dark:bg-zinc-950 transition-opacity duration-300"> <div className="loader-icon"> <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg> </div> </div> );
 
             return (
                 <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 transition-colors duration-300 overflow-x-hidden">
@@ -893,7 +710,7 @@
                                 <h1 className="text-xl font-black tracking-tight text-slate-800 dark:text-white">ReviewFlow</h1>
                             </div>
                             <nav className="flex-1 space-y-2">
-                                {[{id:'list',l:'Início',i:Icons.Home},{id:'calendar',l:'Calendário',i:Icons.Calendar},{id:'dashboard',l:'Análise',i:Icons.PieChart},{id:'diary',l:'Diário',i:Icons.Notebook},{id:'simulations',l:'Simulados',i:Icons.ClipboardList}].map(item => (
+                                {[{id:'list',l:'Início',i:Icons.Home},{id:'calendar',l:'Calendário',i:Icons.Calendar},{id:'dashboard',l:'Análise',i:Icons.PieChart},{id:'diary',l:'Diário',i:Icons.Notebook}].map(item => (
                                     <button key={item.id} onClick={() => { setView(item.id); setSelectedDashboardArea(null); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${view === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' : 'text-slate-500 hover:bg-white hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-white'}`}>
                                         <item.i size={20}/> {item.l}
                                     </button>
@@ -912,34 +729,12 @@
                             <div className="absolute inset-0 overflow-y-auto no-scrollbar pr-2">
                                 <header className="flex justify-between items-center mb-6">
                                     <div>
-                                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{view === 'list' ? 'Meus Estudos' : view === 'calendar' ? 'Calendário' : view === 'dashboard' ? 'Análise' : view === 'simulations' ? 'Simulados' : 'Diário'}</h2>
+                                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">{view === 'list' ? 'Meus Estudos' : view === 'calendar' ? 'Calendário' : view === 'dashboard' ? 'Dashboard' : 'Diário'}</h2>
                                         <p className="text-sm text-slate-500 dark:text-slate-400">Bem-vindo de volta! Vamos evoluir hoje?</p>
                                     </div>
                                     <button onClick={() => setModalAddOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-500/30 flex items-center gap-2 transition-all active:scale-95"><Icons.Plus size={20}/> Novo Tópico</button>
                                 </header>
-                                <MainContentView 
-                                    view={view}
-                                    topics={topics}
-                                    logs={logs}
-                                    simulations={simulations}
-                                    onSelectDashboardArea={setSelectedDashboardArea}
-                                    selectedDashboardArea={selectedDashboardArea}
-                                    onOpenReview={handleOpenReview}
-                                    onAddLog={handleAddLog}
-                                    onDeleteLog={handleDeleteLog}
-                                    onAddSimulation={handleAddSimulation}
-                                    onEditSimulation={handleUpdateSimulation}
-                                    onDeleteSimulation={handleDeleteSimulation}
-                                    searchTerm={searchTerm}
-                                    setSearchTerm={setSearchTerm}
-                                    setFilterModalOpen={setFilterModalOpen}
-                                    setSortModalOpen={setSortModalOpen}
-                                    filteredList={filteredList}
-                                    visibleCount={visibleCount}
-                                    setVisibleCount={setVisibleCount}
-                                    handleDelete={handleDelete}
-                                    handleEdit={handleEdit}
-                                />
+                                <MainContent />
                             </div>
                         </main>
 
@@ -999,34 +794,9 @@
                     </div>
 
                     {/* Mobile Main Content Wrapper */}
-                    <div className="lg:hidden min-h-screen pb-28 pt-safe mt-16" 
-                         onTouchStart={handleTouchStart} 
-                         onTouchMove={handleTouchMove} 
-                         onTouchEnd={handleTouchEnd}>
+                    <div className="lg:hidden min-h-screen pb-28 pt-safe mt-16">
                         <main className="max-w-3xl mx-auto px-4 animate-fade-in">
-                            <MainContentView 
-                                view={view}
-                                topics={topics}
-                                logs={logs}
-                                simulations={simulations}
-                                onSelectDashboardArea={setSelectedDashboardArea}
-                                selectedDashboardArea={selectedDashboardArea}
-                                onOpenReview={handleOpenReview}
-                                onAddLog={handleAddLog}
-                                onDeleteLog={handleDeleteLog}
-                                onAddSimulation={handleAddSimulation}
-                                onEditSimulation={handleUpdateSimulation}
-                                onDeleteSimulation={handleDeleteSimulation}
-                                searchTerm={searchTerm}
-                                setSearchTerm={setSearchTerm}
-                                setFilterModalOpen={setFilterModalOpen}
-                                setSortModalOpen={setSortModalOpen}
-                                filteredList={filteredList}
-                                visibleCount={visibleCount}
-                                setVisibleCount={setVisibleCount}
-                                handleDelete={handleDelete}
-                                handleEdit={handleEdit}
-                            />
+                            <MainContent />
                         </main>
                         <nav className="fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 grid grid-cols-5 items-center py-3 pb-safe px-4 safe-bottom">
                             {[{id:'list',i:Icons.Home,l:'Início'},{id:'calendar',i:Icons.Calendar,l:'Agenda'}].map(item => ( 
@@ -1037,7 +807,7 @@
                                 <button aria-label="Adicionar Tópico" onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setModalAddOpen(true); }} className="w-16 h-16 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl shadow-blue-600/40 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-4 border-[#f8fafc] dark:border-[#09090b]"><Icons.Plus size={32}/></button>
                             </div>
 
-                            {[{id:'dashboard',i:Icons.PieChart,l:'Stats'},{id:'simulations',i:Icons.ClipboardList,l:'Simulados'}].map(item => ( 
+                            {[{id:'dashboard',i:Icons.PieChart,l:'Stats'},{id:'diary',i:Icons.Notebook,l:'Diário'}].map(item => ( 
                                 <button aria-label={item.l} key={item.id} onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setView(item.id); setSelectedDashboardArea(null); }} className={`flex flex-col items-center gap-1 p-2 rounded-2xl transition-all active:scale-95 ${view === item.id ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}><item.i size={24} strokeWidth={view === item.id ? 2.5 : 2}/></button> 
                             ))}
                         </nav>
@@ -1045,7 +815,7 @@
 
                     <AddTopicModal isOpen={modalAddOpen} onClose={() => setModalAddOpen(false)} onSave={handleAddTopic} />
                     <EditTopicModal isOpen={!!editingTopic} onClose={() => setEditingTopic(null)} onSave={handleUpdateTopic} topic={editingTopic} />
-                    <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} topics={topics} logs={logs} simulations={simulations} setTopics={setTopics} setLogs={setLogs} setSimulations={setSimulations} syncKey={syncKey} setSyncKey={setSyncKey} status={status} appId={appId} user={user} />
+                    <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} topics={topics} logs={logs} setTopics={setTopics} setLogs={setLogs} syncKey={syncKey} setSyncKey={setSyncKey} status={status} appId={appId} user={user} />
                     <FilterModal isOpen={filterModalOpen} onClose={() => setFilterModalOpen(false)} filter={filter} setFilter={setFilter} areaFilter={areaFilter} setAreaFilter={setAreaFilter} />
                     <SortModal isOpen={sortModalOpen} onClose={() => setSortModalOpen(false)} sortBy={sortBy} setSortBy={setSortBy} />
                     

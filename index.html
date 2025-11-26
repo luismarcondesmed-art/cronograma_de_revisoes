@@ -269,7 +269,7 @@
             return { status, config, setConfig, syncKey, setSyncKey, saveToCloud };
         };
 
-        // --- COMPONENTES UI ---
+        // --- COMPONENTS ---
         const ModalWrapper = ({ isOpen, onClose, children, title }) => { if (!isOpen) return null; return ( <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe"> <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div> <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0"> <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10"> <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3> <button aria-label="Fechar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button> </div> <div className="overflow-y-auto p-0">{children}</div> </div> </div> ); };
 
         const SettingsModal = ({ isOpen, onClose, topics, logs, setTopics, setLogs, syncKey, setSyncKey, status }) => {
@@ -323,12 +323,77 @@
             const [timeLeft, setTimeLeft] = useState(25 * 60); 
             const [isActive, setIsActive] = useState(false); 
             const [mode, setMode] = useState('focus'); 
-            useEffect(() => { let interval = null; if (isActive && timeLeft > 0) interval = setInterval(() => setTimeLeft(t => t - 1), 1000); else if (timeLeft === 0) setIsActive(false); return () => clearInterval(interval); }, [isActive, timeLeft]); 
+            useEffect(() => { let interval = null; if (isActive && timeLeft > 0) interval = setInterval(() => setTimeLeft(t => t - 1), 1000); else if (timeLeft === 0) { setIsActive(false); vibrate(VIBRATE_PATTERNS.success); } return () => clearInterval(interval); }, [isActive, timeLeft]); 
             const modes = { focus: 25*60, short: 5*60, long: 15*60 }; 
             const changeMode = (m) => { setMode(m); setIsActive(false); setTimeLeft(modes[m]); }; 
             const fmt = (s) => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`; 
-            const progress = ((modes[mode] - timeLeft) / modes[mode]) * 100; 
-            return ( <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"> <div className="relative w-full max-w-sm bg-white dark:bg-zinc-900 rounded-3xl p-8 shadow-2xl flex flex-col items-center"> <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><Icons.X size={24}/></button> <h3 className="font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2 text-lg"><Icons.Timer className="text-emerald-500"/> Foco & Fluxo</h3> <div className="flex gap-2 mb-8 bg-slate-100 dark:bg-zinc-950 p-1.5 rounded-xl">{Object.keys(modes).map(m => (<button key={m} onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(m); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg capitalize transition-all ${mode === m ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400'}`}>{m === 'focus' ? 'Foco' : m === 'short' ? 'Pausa Curta' : 'Pausa Longa'}</button>))}</div> <div className="relative w-56 h-56 flex items-center justify-center mb-8"><svg className="absolute top-0 left-0 w-full h-full transform -rotate-90"><circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-zinc-800"/><circle cx="112" cy="112" r="100" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={628} strokeDashoffset={628 - (628 * progress) / 100} className="text-emerald-500 transition-all duration-1000 ease-linear" strokeLinecap="round"/></svg><div className="text-6xl font-black text-slate-800 dark:text-white tracking-widest font-mono">{fmt(timeLeft)}</div></div> <div className="flex gap-4"><button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setIsActive(!isActive); }} className={`w-16 h-16 rounded-2xl flex items-center justify-center text-2xl shadow-lg transition-transform active:scale-95 ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-500 text-white shadow-emerald-500/30'}`}>{isActive ? <Icons.Pause fill="currentColor"/> : <Icons.Play fill="currentColor" className="ml-1"/>}</button><button onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(mode); }} className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"><Icons.RotateCcw/></button></div> </div> </div> ); 
+            
+            return ( 
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"> 
+                    <div className="relative w-full max-w-sm bg-white dark:bg-zinc-950 rounded-[2rem] p-8 shadow-2xl border border-slate-200 dark:border-zinc-800 flex flex-col items-center overflow-hidden"> 
+                        
+                        {/* Close Button */}
+                        <button onClick={onClose} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                            <Icons.X size={28}/>
+                        </button> 
+                        
+                        {/* Title */}
+                        <h3 className="font-bold text-slate-800 dark:text-white mb-8 flex items-center gap-2 text-xl tracking-tight">
+                            <Icons.Timer className="text-emerald-500" size={24}/> Foco & Fluxo
+                        </h3> 
+                        
+                        {/* Timer Display */}
+                        <div className="relative w-64 h-64 flex items-center justify-center mb-10">
+                            {/* Background Ring */}
+                            <svg className="absolute top-0 left-0 w-full h-full transform -rotate-90 drop-shadow-xl">
+                                <circle cx="128" cy="128" r="110" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-slate-100 dark:text-zinc-900"/>
+                                <circle 
+                                    cx="128" cy="128" r="110" 
+                                    stroke="currentColor" strokeWidth="8" fill="transparent" 
+                                    strokeDasharray={691} 
+                                    strokeDashoffset={691 - (691 * ((modes[mode] - timeLeft) / modes[mode]) * 100) / 100} 
+                                    className={`text-${mode === 'focus' ? 'emerald' : 'blue'}-500 transition-all duration-1000 ease-linear`} 
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                            
+                            <div className="text-7xl font-bold tracking-tight text-slate-800 dark:text-white font-mono tabular-nums">
+                                {fmt(timeLeft)}
+                            </div>
+                        </div> 
+                        
+                        {/* Controls */}
+                        <div className="flex items-center gap-6 w-full justify-center mb-8">
+                            <button 
+                                onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(mode); }} 
+                                className="w-14 h-14 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-zinc-800 transition-colors"
+                            >
+                                <Icons.RotateCcw size={24}/>
+                            </button>
+                            
+                            <button 
+                                onClick={() => { vibrate(VIBRATE_PATTERNS.tick); setIsActive(!isActive); }} 
+                                className={`w-20 h-20 rounded-full flex items-center justify-center text-3xl shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all ${isActive ? 'bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-500 text-white'}`}
+                            >
+                                {isActive ? <Icons.Pause fill="currentColor" size={32}/> : <Icons.Play fill="currentColor" className="ml-1" size={32}/>}
+                            </button>
+                        </div>
+
+                        {/* Mode Toggles */}
+                        <div className="flex gap-1 bg-slate-100 dark:bg-zinc-900 p-1.5 rounded-2xl w-full">
+                            {Object.keys(modes).map(m => (
+                                <button 
+                                    key={m} 
+                                    onClick={() => { vibrate(VIBRATE_PATTERNS.tick); changeMode(m); }} 
+                                    className={`flex-1 py-3 text-xs font-bold rounded-xl capitalize transition-all ${mode === m ? 'bg-white dark:bg-zinc-800 text-emerald-600 dark:text-emerald-400 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    {m === 'focus' ? 'Foco' : m === 'short' ? 'Curta' : 'Longa'}
+                                </button>
+                            ))}
+                        </div> 
+                    </div> 
+                </div> 
+            ); 
         };
 
         const DashboardSummary = ({ topics }) => {
@@ -569,9 +634,6 @@
                             </div>
                         </header>
                         <main className="max-w-3xl mx-auto px-4 mt-24 animate-fade-in">
-                            <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar p-1">
-                                {[{id:'list',l:'Lista',i:Icons.List},{id:'calendar',l:'Calendário',i:Icons.Calendar},{id:'diary',l:'Diário',i:Icons.Notebook},{id:'dashboard',l:'Análise',i:Icons.PieChart}].map(tab => ( <button key={tab.id} onClick={() => { setView(tab.id); setSelectedDashboardArea(null); }} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap ${view === tab.id ? 'bg-white dark:bg-zinc-800 text-slate-800 dark:text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'}`}><tab.i size={16}/> {tab.l}</button> ))}
-                            </div>
                             <MainContent />
                         </main>
                         <nav className="fixed bottom-0 left-0 w-full glass border-t border-slate-200/50 dark:border-white/5 z-50 flex justify-around items-center py-4 px-4 pb-safe">
@@ -595,7 +657,11 @@
         }
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render( <ToastProvider> <App /> </ToastProvider> );
+        root.render( 
+            <ToastProvider> 
+                <App /> 
+            </ToastProvider> 
+        );
     </script>
 </body>
 </html>

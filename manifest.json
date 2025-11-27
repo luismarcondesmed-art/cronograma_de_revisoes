@@ -1,6 +1,6 @@
 {
-  "name": "ResiFlow",
-  "short_name": "ResiFlow",
+  "name": "ReviewFlow",
+  "short_name": "ReviewFlow",
   "description": "Gerencie seus estudos de residência médica",
   "start_url": "./index.html",
   "display": "standalone",

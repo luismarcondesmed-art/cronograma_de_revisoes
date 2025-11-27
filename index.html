@@ -205,10 +205,10 @@
         const useSync = (topics, logs, simulados, setTopics, setLogs, setSimulados) => {
             const [status, setStatus] = useState('offline');
             const { showToast } = useContext(ToastContext);
-            const [syncKey, _setSyncKey] = useState(() => localStorage.getItem('resiflow_sync_key') || '');
-            const [config, setConfig] = useState(() => { if (typeof __firebase_config !== 'undefined') { try { return JSON.parse(__firebase_config); } catch (e) { console.error(e); } } return safeJSONParse('resiflow_fb_config', USER_FIREBASE_CONFIG); });
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'resiflow';
-            const setSyncKey = (newKey) => { if (newKey !== syncKey) { setTopics([]); setLogs([]); setSimulados([]); } _setSyncKey(newKey); localStorage.setItem('resiflow_sync_key', newKey); };
+            const [syncKey, _setSyncKey] = useState(() => localStorage.getItem('reviewflow_sync_key') || '');
+            const [config, setConfig] = useState(() => { if (typeof __firebase_config !== 'undefined') { try { return JSON.parse(__firebase_config); } catch (e) { console.error(e); } } return safeJSONParse('reviewflow_fb_config', USER_FIREBASE_CONFIG); });
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'reviewflow';
+            const setSyncKey = (newKey) => { if (newKey !== syncKey) { setTopics([]); setLogs([]); setSimulados([]); } _setSyncKey(newKey); localStorage.setItem('reviewflow_sync_key', newKey); };
             const dbRef = useRef(null);
             const stateRef = useRef({ topics, logs, simulados });
             useEffect(() => { stateRef.current = { topics, logs, simulados }; }, [topics, logs, simulados]);
@@ -901,9 +901,9 @@
             useEffect(() => { 
                 if (dataLoaded) return; 
                 try { 
-                    const t = safeJSONParse('resiflow_v3_data', []); 
-                    const l = safeJSONParse('resiflow_logs', []); 
-                    const s = safeJSONParse('resiflow_simulados', []);
+                    const t = safeJSONParse('reviewflow_v3_data', []); 
+                    const l = safeJSONParse('reviewflow_logs', []); 
+                    const s = safeJSONParse('reviewflow_simulados', []);
                     setTopics(t); 
                     setLogs(l); 
                     setSimulados(s);
@@ -918,7 +918,7 @@
             const [searchTerm, setSearchTerm] = useState('');
             
             // Theme State: 'light', 'dark', 'system'
-            const [themeMode, setThemeMode] = useState(() => localStorage.getItem('resiflow_theme_mode') || 'system');
+            const [themeMode, setThemeMode] = useState(() => localStorage.getItem('reviewflow_theme_mode') || 'system');
             
             const [modalAddOpen, setModalAddOpen] = useState(false); 
             const [modalSimuladoOpen, setModalSimuladoOpen] = useState(false);
@@ -945,7 +945,7 @@
                     else document.documentElement.classList.remove('dark');
                 };
                 applyTheme();
-                localStorage.setItem('resiflow_theme_mode', themeMode);
+                localStorage.setItem('reviewflow_theme_mode', themeMode);
                 
                 if (themeMode === 'system') {
                     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -963,9 +963,9 @@
             
             useEffect(() => { 
                 if (!dataLoaded) return;
-                localStorage.setItem('resiflow_v3_data', JSON.stringify(topics)); 
-                localStorage.setItem('resiflow_logs', JSON.stringify(logs)); 
-                localStorage.setItem('resiflow_simulados', JSON.stringify(simulados));
+                localStorage.setItem('reviewflow_v3_data', JSON.stringify(topics)); 
+                localStorage.setItem('reviewflow_logs', JSON.stringify(logs)); 
+                localStorage.setItem('reviewflow_simulados', JSON.stringify(simulados));
                 if (status === 'online') { const t = setTimeout(() => saveToCloud(topics, logs, simulados), 2000); return () => clearTimeout(t); } 
             }, [topics, logs, simulados, status, dataLoaded]);
 

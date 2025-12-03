@@ -85,7 +85,7 @@
         html { background-color: var(--bg-color); transition: background-color 300ms ease; min-height: 100dvh; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
         body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; min-height: 100dvh; width: 100%; overscroll-behavior-y: none; background-color: transparent; color: var(--text-color); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; overflow-x: hidden; }
         
-        /* Modern Scrollbar for Windows */
+        /* Modern Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
@@ -97,8 +97,8 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .ios-scroll { -webkit-overflow-scrolling: touch; }
         
-        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-        .dark .glass { background: rgba(9, 9, 11, 0.7); border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+        .dark .glass { background: rgba(9, 9, 11, 0.9); border-bottom: 1px solid rgba(255,255,255,0.05); }
         
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
         .pt-safe { padding-top: env(safe-area-inset-top); }
@@ -261,7 +261,6 @@
 
         // --- VISUALIZATION COMPONENTS ---
         
-        // Radar Chart for Skills
         const RadarChart = ({ stats }) => {
             const size = 200;
             const center = size / 2;
@@ -284,26 +283,25 @@
             return (
                 <div className="relative flex justify-center py-4">
                     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
-                        {/* Grid */}
                         {gridLevels.map(level => (
                             <polygon key={level} points={stats.map((_, i) => {
                                 const { x, y } = getCoordinates(level, i);
                                 return `${x},${y}`;
                             }).join(' ')} fill="none" stroke="currentColor" className="text-slate-200 dark:text-zinc-700" strokeWidth="1" />
                         ))}
-                        {/* Axes */}
+                        
                         {stats.map((_, i) => {
                             const { x, y } = getCoordinates(100, i);
                             return <line key={i} x1={center} y1={center} x2={x} y2={y} stroke="currentColor" className="text-slate-200 dark:text-zinc-700" strokeWidth="1" />;
                         })}
-                        {/* Data Polygon */}
+
                         <polygon points={points} fill="rgba(59, 130, 246, 0.2)" stroke="#3b82f6" strokeWidth="2" />
-                        {/* Dots */}
+                        
                         {stats.map((stat, i) => {
                             const { x, y } = getCoordinates(stat.acc, i);
                             return <circle key={i} cx={x} cy={y} r="3" className="fill-blue-500 stroke-white dark:stroke-zinc-900" strokeWidth="1.5" />
                         })}
-                        {/* Labels */}
+
                         {stats.map((stat, i) => {
                             const { x, y } = getCoordinates(115, i); 
                             return (
@@ -317,7 +315,6 @@
             );
         };
 
-        // XP Level System
         const LevelSystem = ({ totalQuestions }) => {
             const xpPerQ = 10;
             const currentXP = totalQuestions * xpPerQ;
@@ -327,7 +324,7 @@
             const progress = ((currentXP - prevLevelXP) / (nextLevelXP - prevLevelXP)) * 100;
 
             return (
-                <div className="bg-gradient-to-r from-slate-100 to-white dark:from-zinc-800 dark:to-zinc-900 rounded-xl p-3 mb-4 flex items-center gap-3 border border-slate-200 dark:border-zinc-700">
+                <div className="bg-white dark:bg-zinc-900 rounded-xl p-3 mb-4 flex items-center gap-3 border border-slate-200 dark:border-zinc-700 shadow-sm">
                     <div className="relative w-10 h-10 flex items-center justify-center bg-amber-100 dark:bg-amber-900/20 rounded-full">
                         <Icons.Trophy className="text-amber-500" size={20}/>
                         <div className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-sm">Lvl {level}</div>
@@ -337,15 +334,14 @@
                             <span>{currentXP} XP</span>
                             <span>{nextLevelXP} XP</span>
                         </div>
-                        <div className="h-2 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-1000" style={{width: `${progress}%`}}></div>
+                        <div className="h-2 bg-slate-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                            <div className="h-full bg-amber-500 rounded-full transition-all duration-1000" style={{width: `${progress}%`}}></div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // Pomodoro Widget (Integrated)
         const PomodoroWidget = ({ timerState, setTimerState, onTimerComplete }) => {
             const { timeLeft, isActive, mode } = timerState;
             useEffect(() => {
@@ -357,7 +353,7 @@
                     vibrate(VIBRATE_PATTERNS.alarm);
                     const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
                     audio.play().catch(e=>console.log(e));
-                    if (onTimerComplete && mode === 'focus') onTimerComplete(); // Auto Log
+                    if (onTimerComplete && mode === 'focus') onTimerComplete(); 
                 }
                 return () => clearInterval(interval);
             }, [isActive, timeLeft, setTimerState, mode, onTimerComplete]);
@@ -374,22 +370,22 @@
                 vibrate(VIBRATE_PATTERNS.tick);
             };
             return (
-                <div className="bg-white/50 dark:bg-zinc-800/50 backdrop-blur-md rounded-2xl p-4 border border-slate-200/50 dark:border-zinc-700/50 animate-fade-in shadow-sm">
-                    <div className="flex justify-between items-center mb-3">
+                <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-2xl p-3 border border-slate-200/50 dark:border-zinc-700/50 animate-fade-in shadow-sm">
+                    <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Pomodoro</span>
                         <div className="flex gap-1">
                             <button onClick={() => setMode('focus', 25)} className={`w-2 h-2 rounded-full transition-all ${mode === 'focus' ? 'bg-blue-500 scale-125' : 'bg-slate-300 dark:bg-zinc-600'}`}></button>
                             <button onClick={() => setMode('short', 5)} className={`w-2 h-2 rounded-full transition-all ${mode === 'short' ? 'bg-emerald-500 scale-125' : 'bg-slate-300 dark:bg-zinc-600'}`}></button>
                         </div>
                     </div>
-                    <div className="text-center mb-3">
-                        <div className="text-4xl font-black tabular-nums text-slate-800 dark:text-white tracking-tight font-mono">{formatTime(timeLeft)}</div>
+                    <div className="text-center mb-2">
+                        <div className="text-3xl font-black tabular-nums text-slate-800 dark:text-white tracking-tight">{formatTime(timeLeft)}</div>
                     </div>
                     <div className="flex gap-2">
-                        <button onClick={toggleTimer} className={`flex-1 py-2 rounded-xl flex items-center justify-center text-white font-bold text-xs transition-all shadow-lg active:scale-95 ${isActive ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'}`}>
+                        <button onClick={toggleTimer} className={`flex-1 py-2 rounded-xl flex items-center justify-center text-white font-bold text-xs transition-all shadow-sm active:scale-95 ${isActive ? 'bg-amber-500 hover:bg-amber-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
                             {isActive ? <Icons.Pause size={16} fill="currentColor"/> : <Icons.Play size={16} fill="currentColor" className="ml-0.5"/>}
                         </button>
-                        <button onClick={resetTimer} className="w-10 flex items-center justify-center bg-slate-100 dark:bg-zinc-700 rounded-xl text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-zinc-600 transition-colors">
+                        <button onClick={resetTimer} className="w-10 flex items-center justify-center bg-slate-100 dark:bg-zinc-800 rounded-xl text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-colors">
                             <Icons.RotateCcw size={16}/>
                         </button>
                     </div>
@@ -402,20 +398,16 @@
                 const today = getTodayStr();
                 const active = topics.filter(t => !t.deleted);
                 
-                // Score topics based on urgency
                 const scored = active.map(t => {
                     let score = 0;
                     const nextReview = t.reviews.find(r => !r.done);
                     if (!nextReview) return { ...t, score: -1 };
                     
-                    // Base score for Overdue
                     if (nextReview.date < today) score += 50;
                     else if (nextReview.date === today) score += 30;
                     
-                    // High Priority
                     if (t.importance === 'high') score += 20;
                     
-                    // Low Accuracy Previous
                     const prevReview = t.reviews.filter(r => r.done).pop();
                     if (prevReview && (prevReview.correct / prevReview.total) < 0.7) score += 15;
                     
@@ -434,13 +426,17 @@
                         Sugestões Inteligentes
                     </h3>
                     <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-                        {suggestions.map(t => (
-                            <div key={t.id} onClick={() => onReview(t.id, t.nextReviewIndex)} className="min-w-[200px] p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/20 cursor-pointer hover:scale-[1.02] transition-transform">
-                                <div className="text-[10px] font-bold opacity-80 uppercase mb-1">{t.reviews[t.nextReviewIndex].label}</div>
-                                <div className="font-bold text-sm leading-tight mb-2 line-clamp-2">{t.title}</div>
-                                <div className="text-xs bg-white/20 px-2 py-1 rounded-lg w-fit backdrop-blur-sm">Revisar Agora</div>
-                            </div>
-                        ))}
+                        {suggestions.map(t => {
+                            const areaInfo = AREAS.find(a => a.id === t.area) || AREAS[0];
+                            return (
+                                <div key={t.id} onClick={() => onReview(t.id, t.nextReviewIndex)} className="min-w-[200px] p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl shadow-sm cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden">
+                                    <div className={`absolute top-0 left-0 w-1 h-full ${areaInfo.color.split(' ')[0].replace('bg-', 'bg-').replace('/20', '-500')}`}></div>
+                                    <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">{t.reviews[t.nextReviewIndex].label}</div>
+                                    <div className="font-bold text-sm text-slate-800 dark:text-white leading-tight mb-2 line-clamp-2">{t.title}</div>
+                                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg w-fit">Revisar Agora</div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -456,14 +452,14 @@
             }, [logs]);
 
             return (
-                <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 p-3 rounded-xl flex items-center gap-3 mb-6">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full text-blue-600 dark:text-blue-400"><Icons.Lightbulb size={18}/></div>
-                    <div className="text-sm font-medium text-slate-700 dark:text-blue-100">{insight}</div>
+                <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-4 rounded-xl flex items-center gap-3 mb-6 shadow-sm">
+                    <div className="bg-amber-100 dark:bg-amber-900/30 p-2 rounded-full text-amber-600 dark:text-amber-400"><Icons.Lightbulb size={18}/></div>
+                    <div className="text-sm font-medium text-slate-700 dark:text-slate-300">{insight}</div>
                 </div>
             );
         };
 
-        const ModalWrapper = ({ isOpen, onClose, children, title }) => { if (!isOpen) return null; return ( <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe"> <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div> <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[90vh] mb-safe md:mb-0"> <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10"> <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3> <button aria-label="Fechar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button> </div> <div className="overflow-y-auto p-0">{children}</div> </div> </div> ); };
+        const ModalWrapper = ({ isOpen, onClose, children, title }) => { if (!isOpen) return null; return ( <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center sm:p-4 pb-safe"> <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div> <div className="relative w-full max-w-lg bg-white dark:bg-zinc-900 md:rounded-2xl rounded-t-2xl shadow-2xl animate-slide-up flex flex-col max-h-[85vh] mb-safe md:mb-0"> <div className="p-4 border-b border-slate-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-md rounded-t-2xl z-10"> <h3 className="text-lg font-bold text-slate-800 dark:text-white">{title}</h3> <button aria-label="Fechar" onClick={onClose} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full"><Icons.X size={20} className="text-slate-400"/></button> </div> <div className="overflow-y-auto p-0">{children}</div> </div> </div> ); };
 
         const SettingsModal = ({ isOpen, onClose, topics, logs, simulados, setTopics, setLogs, setSimulados, syncKey, setSyncKey, status, appId, themeMode, toggleTheme }) => {
             const [tempKey, setTempKey] = useState(syncKey);
@@ -672,7 +668,7 @@
         const DiaryWidget = ({ logs, topics }) => {
             const streak = useMemo(() => { let currentStreak = 0; const today = new Date(); let d = new Date(today); const todayStr = d.toISOString().split('T')[0]; const todayActive = logs.some(l => l.date === todayStr && !l.deleted); if (!todayActive) d.setDate(d.getDate() - 1); while (true) { const dateStr = d.toISOString().split('T')[0]; if (logs.some(l => l.date === dateStr && !l.deleted)) { currentStreak++; d.setDate(d.getDate() - 1); } else break; } return currentStreak; }, [logs]);
             const upcomingReviews = useMemo(() => { const upcoming = []; const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1); const tomorrowStr = tomorrow.toISOString().split('T')[0]; topics.forEach(t => { if (t.deleted) return; t.reviews.forEach(r => { if (!r.done && r.date >= tomorrowStr) upcoming.push({ topic: t, review: r }); }); }); return upcoming.sort((a, b) => a.review.date.localeCompare(b.review.date)).slice(0, 5); }, [topics]);
-            return ( <div className="space-y-6"> <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-3xl p-6 text-white shadow-lg shadow-indigo-500/30 relative overflow-hidden group"> <Icons.Flame className="absolute right-4 bottom-4 opacity-20 group-hover:scale-110 transition-transform duration-500" size={80}/> <div className="relative z-10"> <div className="text-indigo-100 text-sm font-bold mb-1 uppercase">Sequência Atual</div> <div className="text-5xl font-black tracking-tighter">{streak} <span className="text-2xl">dias</span></div> <div className="text-indigo-100 text-xs mt-2 font-medium">Mantenha o foco! 🔥</div> </div> </div> <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm"> <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><Icons.Calendar size={18} className="text-blue-500"/> Próximas Revisões</h3> <div className="space-y-3">{upcomingReviews.length === 0 ? (<p className="text-center text-slate-400 text-sm py-4">Nada agendado para breve.</p>) : (upcomingReviews.map((item, i) => { const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; return ( <div key={i} className="flex items-start gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors"> <div className={`w-1.5 h-1.5 rounded-full mt-2 bg-${c}-500`}></div> <div className="flex-1 min-w-0"> <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">{formatDate(item.review.date)}</div> <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{item.topic.title}</div> <div className="text-xs text-slate-500">{item.review.label}</div> </div> </div> ) }))}</div> </div> </div> );
+            return ( <div className="space-y-6"> <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm relative overflow-hidden group"> <div className="flex justify-between items-center relative z-10"> <div> <div className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Sequência Atual</div> <div className="text-4xl font-black text-slate-800 dark:text-white tracking-tight">{streak} <span className="text-xl text-slate-400">dias</span></div> <div className="text-slate-500 text-xs mt-1 font-medium">Mantenha o foco! 🔥</div> </div> <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center text-orange-500"><Icons.Flame size={32}/></div> </div> </div> <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-slate-200 dark:border-zinc-800 p-5 shadow-sm"> <h3 className="font-bold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2"><Icons.Calendar size={18} className="text-blue-500"/> Próximas Revisões</h3> <div className="space-y-3">{upcomingReviews.length === 0 ? (<p className="text-center text-slate-400 text-sm py-4">Nada agendado para breve.</p>) : (upcomingReviews.map((item, i) => { const c = { clinica: 'blue', cirurgia: 'red', pediatria: 'amber', go: 'purple', preventiva: 'emerald' }[item.topic.area] || 'blue'; return ( <div key={i} className="flex items-start gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-zinc-800/50 rounded-xl transition-colors"> <div className={`w-1.5 h-1.5 rounded-full mt-2 bg-${c}-500`}></div> <div className="flex-1 min-w-0"> <div className="text-xs font-bold text-slate-400 uppercase mb-0.5">{formatDate(item.review.date)}</div> <div className="font-bold text-sm text-slate-800 dark:text-slate-200 truncate">{item.topic.title}</div> <div className="text-xs text-slate-500">{item.review.label}</div> </div> </div> ) }))}</div> </div> </div> );
         }
 
         const DiaryView = ({ logs, onAddLog, onDeleteLog, topics }) => {
@@ -1072,7 +1068,7 @@
             ); 
         };
 
-        const BentoDashboard = ({ topics, onSelectArea, onFilter }) => { 
+        const BentoDashboard = ({ topics, onSelectArea, onFilter, totalQuestionsAnswered }) => { 
             const stats = useMemo(() => { 
                 const active = topics.filter(t => !t.deleted); 
                 const reviewsDone = active.reduce((acc, t) => acc + t.reviews.filter(r => r.done).length, 0); 
@@ -1085,7 +1081,6 @@
                     const c = ts.reduce((ac, t) => ac + t.reviews.filter(r => r.done).reduce((s, r) => s + (r.correct || 0), 0), 0); 
                     return { ...a, acc: q > 0 ? Math.round((c/q)*100) : 0, q }; 
                 });
-                // Note: Not sorting here to keep Radar Chart consistent order, map order matters for polygon shape
                 
                 const last14Days = [];
                 const today = new Date();
@@ -1106,6 +1101,11 @@
             
             return ( 
                 <div className="space-y-4 animate-fade-in pb-32 lg:pb-0">
+                    {/* XP Level System (Mobile Only View inside Dashboard) */}
+                    <div className="lg:hidden">
+                         <LevelSystem totalQuestions={totalQuestionsAnswered} />
+                    </div>
+
                     {/* Top Row: Key Metrics */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4"> 
                         <div className="col-span-1 glass dark:bg-zinc-900 rounded-3xl p-5 border border-slate-200 dark:border-white/5 shadow-sm flex flex-col justify-center hover:scale-[1.02] transition-transform duration-300"><div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-3"><Icons.CheckCircle2 size={20}/></div><div className="text-2xl font-bold text-slate-800 dark:text-white">{stats.reviewsDone}</div><div className="text-xs text-slate-400 font-medium">Revisões</div></div> 
@@ -1401,7 +1401,7 @@
 
             const MainContent = () => {
                 if (view === 'simulados') return <SimuladosView simulados={simulados} topics={topics} onAdd={() => { setEditingSimulado(null); setModalSimuladoOpen(true); }} onDelete={(id) => setDeleteSimuladoConfirmId(id)} onEdit={(sim) => { setEditingSimulado(sim); setModalSimuladoOpen(true); }} onOpenTopic={(tid) => { const topic = topics.find(t=>t.id===tid); if(topic) { const idx = topic.reviews.findIndex(r=>!r.done); if(idx!==-1) handleOpenReview(tid, idx); } }} />;
-                if (view === 'dashboard') return selectedDashboardArea ? <AreaDetailView areaId={selectedDashboardArea} onBack={() => setSelectedDashboardArea(null)} topics={topics} /> : <BentoDashboard topics={topics} onSelectArea={handleAreaSelect} />;
+                if (view === 'dashboard') return selectedDashboardArea ? <AreaDetailView areaId={selectedDashboardArea} onBack={() => setSelectedDashboardArea(null)} topics={topics} /> : <BentoDashboard topics={topics} onSelectArea={handleAreaSelect} totalQuestionsAnswered={totalQuestionsAnswered} />;
                 if (view === 'calendar') return <CalendarView topics={topics} simulados={simulados} onOpenReview={(tid, idx) => handleOpenReview(tid, idx)} />;
                 if (view === 'diary') return <DiaryView logs={logs} onAddLog={handleAddLog} onDeleteLog={handleDeleteLog} topics={topics} />;
                 return (
@@ -1520,7 +1520,7 @@
                             </div>
                         )}
                         <main className="max-w-3xl mx-auto px-4 animate-fade-in">
-                            <div className="mb-4">
+                            <div className="mb-4 hidden lg:block"> {/* Hide LevelSystem on mobile home unless in dashboard */}
                                  <LevelSystem totalQuestions={totalQuestionsAnswered} />
                             </div>
                             <MainContent />
